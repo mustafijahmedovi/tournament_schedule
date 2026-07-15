@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Tournament View</title>
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f0f2f5;
+    color: #1a1a1a;
+  }
+  h1 { text-align: center; color: #1a1a2e; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 28px; font-size: 14px; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    margin-bottom: 24px;
+  }
+  .card h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #1a1a2e;
+    border-bottom: 2px solid #f0f2f5;
+    padding-bottom: 10px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 14px;
+  }
+  th, td {
+    padding: 8px 10px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+  }
+  th {
+    background: #f8f9fb;
+    color: #555;
+    font-size: 12px;
+    text-transform: uppercase;
+  }
+  td.team-name { text-align: left; font-weight: 600; }
+  tr:first-child td.team-name { color: #15803d; }
+
+  .round-block { margin-bottom: 18px; }
+  .round-title { font-weight: 600; font-size: 14px; color: #444; margin-bottom: 8px; }
+  .match-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 12px;
+    background: #f8f9fb;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  .match-teams { font-size: 14px; flex: 1; min-width: 160px; }
+  .bye-row { color: #999; font-style: italic; }
+  .score-inputs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .score-inputs input {
+    width: 46px;
+    padding: 6px;
+    text-align: center;
+    border: 1px solid #ddd;
+    border-radius: 6px;
+    font-size: 14px;
+  }
+  .score-inputs button {
+    padding: 6px 12px;
+    font-size: 13px;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .score-inputs button:hover { background: #1d4ed8; }
+  .played-badge {
+    font-size: 12px;
+    font-weight: 600;
+    color: #15803d;
+    background: #dcfce7;
+    padding: 4px 10px;
+    border-radius: 12px;
+  }
+
+  .group-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .group-tab {
+    padding: 8px 16px;
+    border-radius: 8px;
+    background: #e5e7eb;
+    color: #333;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+  }
+  .group-tab.active {
+    background: #2563eb;
+    color: white;
+  }
+  .loading, .error-box {
+    text-align: center;
+    padding: 40px;
+    color: #666;
+  }
+</style>
+</head>
+<body>
+
+<div id="loadingBox" class="loading">Loading tournament...</div>
+<div id="errorBox" class="error-box" style="display:none;"></div>
+
+<div id="content" style="display:none;">
+  <h1 id="tournamentName">🏆 Tournament</h1>
+  <p class="subtitle">Share this page's link so others can view live standings</p>
+
+  <div class="group-tabs" id="groupTabs"></div>
+
+  <div class="card">
+    <h2>Standings</h2>
+    <div id="standingsTable"></div>
+  </div>
+
+  <div class="card">
+    <h2>Schedule</h2>
+    <div id="scheduleList"></div>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+const urlParams = new URLSearchParams(window.location.search);
+const tournamentId = urlParams.get("id");
+
+let tournamentData = null;
+let currentGroup = 0;
+
+async function loadTournament() {
+  if (!tournamentId) {
+    showError("No tournament ID provided in the link.");
+    return;
+  }
+
+  try {
+    const response = await fetch(`${API_BASE}/tournament/${tournamentId}`);
+    if (!response.ok) throw new Error("Tournament not found");
+    tournamentData = await response.json();
+
+    document.getElementById("tournamentName").innerText = "🏆 " + tournamentData.name;
+    document.getElementById("loadingBox").style.display = "none";
+    document.getElementById("content").style.display = "block";
+
+    renderGroupTabs();
+    await renderStandings();
+    renderSchedule();
+
+  } catch (error) {
+    showError("Could not load tournament. Check the link or make sure the server is running.");
+  }
+}
+
+function renderGroupTabs() {
+  const tabsDiv = document.getElementById("groupTabs");
+  const numGroups = tournamentData.groups.length;
+
+  if (numGroups <= 1) {
+    tabsDiv.style.display = "none";
+    return;
+  }
+
+  tabsDiv.innerHTML = tournamentData.groups.map((g, i) => {
+    const letter = String.fromCharCode(65 + i);
+    return `<button class="group-tab ${i === currentGroup ? 'active' : ''}" onclick="switchGroup(${i})">Group ${letter}</button>`;
+  }).join("");
+}
+
+async function switchGroup(index) {
+  currentGroup = index;
+  renderGroupTabs();
+  await renderStandings();
+  renderSchedule();
+}
+
+async function renderStandings() {
+  const container = document.getElementById("standingsTable");
+  try {
+    const response = await fetch(`${API_BASE}/tournament/${tournamentId}/standings`);
+    const data = await response.json();
+    const table = data.standings[currentGroup];
+
+    let html = `
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;">Team</th>
+            <th>P</th><th>W</th><th>D</th><th>L</th>
+            <th>GF</th><th>GA</th><th>GD</th><th>Pts</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+    table.forEach(row => {
+      html += `
+        <tr>
+          <td class="team-name">${escapeHtml(row.team)}</td>
+          <td>${row.played}</td><td>${row.won}</td><td>${row.drawn}</td><td>${row.lost}</td>
+          <td>${row.goals_for}</td><td>${row.goals_against}</td><td>${row.goal_difference}</td>
+          <td><strong>${row.points}</strong></td>
+        </tr>
+      `;
+    });
+    html += "</tbody></table>";
+    container.innerHTML = html;
+
+  } catch (error) {
+    container.innerHTML = "<p>Could not load standings.</p>";
+  }
+}
+
+function renderSchedule() {
+  const container = document.getElementById("scheduleList");
+  const groupSchedule = tournamentData.schedule[currentGroup];
+  const groupResults = tournamentData.results[currentGroup];
+  const isCricket = tournamentData.game_type === "cricket";
+
+  let html = "";
+
+  groupSchedule.forEach((roundMatches, roundIndex) => {
+    html += `<div class="round-block"><div class="round-title">Round ${roundIndex + 1}</div>`;
+
+    roundMatches.forEach((match, matchIndex) => {
+      const [team1, team2] = match;
+      const result = groupResults[roundIndex][matchIndex];
+
+      if (team1 === "BYE" || team2 === "BYE") {
+        const restingTeam = team1 === "BYE" ? team2 : team1;
+        html += `<div class="match-row bye-row">${escapeHtml(restingTeam)} — Bye (resting this round)</div>`;
+        return;
+      }
+
+      if (result.played) {
+        let scoreDisplay;
+        if (isCricket) {
+          const w1 = result.team1_wickets !== null && result.team1_wickets !== undefined ? result.team1_wickets : "-";
+          const w2 = result.team2_wickets !== null && result.team2_wickets !== undefined ? result.team2_wickets : "-";
+          scoreDisplay = `${result.team1_score}/${w1} - ${result.team2_score}/${w2}`;
+        } else {
+          scoreDisplay = `${result.team1_score} - ${result.team2_score}`;
+        }
+        html += `
+          <div class="match-row">
+            <span class="match-teams">${escapeHtml(team1)} <strong>${scoreDisplay}</strong> ${escapeHtml(team2)}</span>
+            <span class="played-badge">✓ Played</span>
+          </div>
+        `;
+      } else if (isCricket) {
+        html += `
+          <div class="match-row">
+            <span class="match-teams">${escapeHtml(team1)} vs ${escapeHtml(team2)}</span>
+            <div class="score-inputs">
+              <input type="number" min="0" id="runs1_${roundIndex}_${matchIndex}" placeholder="Runs" style="width:60px;">
+              <span>/</span>
+              <input type="number" min="0" max="10" id="wkts1_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:50px;">
+              <span>vs</span>
+              <input type="number" min="0" id="runs2_${roundIndex}_${matchIndex}" placeholder="Runs" style="width:60px;">
+              <span>/</span>
+              <input type="number" min="0" max="10" id="wkts2_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:50px;">
+              <button onclick="submitCricketResult(${roundIndex}, ${matchIndex})">Save</button>
+            </div>
+          </div>
+        `;
+      } else {
+        html += `
+          <div class="match-row">
+            <span class="match-teams">${escapeHtml(team1)} vs ${escapeHtml(team2)}</span>
+            <div class="score-inputs">
+              <input type="number" min="0" id="score1_${roundIndex}_${matchIndex}" placeholder="0">
+              <span>-</span>
+              <input type="number" min="0" id="score2_${roundIndex}_${matchIndex}" placeholder="0">
+              <button onclick="submitResult(${roundIndex}, ${matchIndex})">Save</button>
+            </div>
+          </div>
+        `;
+      }
+    });
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+async function submitCricketResult(roundIndex, matchIndex) {
+  const runs1 = parseInt(document.getElementById(`runs1_${roundIndex}_${matchIndex}`).value);
+  const wkts1 = parseInt(document.getElementById(`wkts1_${roundIndex}_${matchIndex}`).value);
+  const runs2 = parseInt(document.getElementById(`runs2_${roundIndex}_${matchIndex}`).value);
+  const wkts2 = parseInt(document.getElementById(`wkts2_${roundIndex}_${matchIndex}`).value);
+
+  if (isNaN(runs1) || isNaN(runs2)) {
+    alert("Please enter runs for both teams.");
+    return;
+  }
+
+  try {
+    await fetch(`${API_BASE}/match-result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        group_index: currentGroup,
+        round_index: roundIndex,
+        match_index: matchIndex,
+        team1_score: runs1,
+        team2_score: runs2,
+        team1_wickets: isNaN(wkts1) ? null : wkts1,
+        team2_wickets: isNaN(wkts2) ? null : wkts2
+      })
+    });
+
+    const response = await fetch(`${API_BASE}/tournament/${tournamentId}`);
+    tournamentData = await response.json();
+
+    await renderStandings();
+    renderSchedule();
+
+  } catch (error) {
+    alert("Could not save result. Please try again.");
+  }
+}
+
+async function submitResult(roundIndex, matchIndex) {
+  const score1El = document.getElementById(`score1_${roundIndex}_${matchIndex}`);
+  const score2El = document.getElementById(`score2_${roundIndex}_${matchIndex}`);
+
+  const score1 = parseInt(score1El.value);
+  const score2 = parseInt(score2El.value);
+
+  if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
+    alert("Please enter valid scores for both teams.");
+    return;
+  }
+
+  try {
+    await fetch(`${API_BASE}/match-result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        group_index: currentGroup,
+        round_index: roundIndex,
+        match_index: matchIndex,
+        team1_score: score1,
+        team2_score: score2
+      })
+    });
+
+    // Refresh local data so the UI updates
+    const response = await fetch(`${API_BASE}/tournament/${tournamentId}`);
+    tournamentData = await response.json();
+
+    await renderStandings();
+    renderSchedule();
+
+  } catch (error) {
+    alert("Could not save result. Please try again.");
+  }
+}
+
+function showError(msg) {
+  document.getElementById("loadingBox").style.display = "none";
+  const errorBox = document.getElementById("errorBox");
+  errorBox.innerText = msg;
+  errorBox.style.display = "block";
+}
+
+function escapeHtml(text) {
+  const div = document.createElement("div");
+  div.innerText = text;
+  return div.innerHTML;
+}
+
+loadTournament();
+</script>
+
+</body>
+</html>

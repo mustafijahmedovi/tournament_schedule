@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Create Tournament</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --pitch-dark: #0B3D2E;
+    --pitch-green: #1F7A4D;
+    --chalk: #F5F3EA;
+    --amber: #FFB627;
+    --ink: #16211C;
+    --line: #DCD8C8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Inter', sans-serif;
+    max-width: 640px;
+    margin: 0 auto;
+    padding: 0 20px 60px;
+    background: var(--chalk);
+    color: var(--ink);
+  }
+
+  .stadium-header {
+    background: var(--pitch-dark);
+    background-image:
+      repeating-linear-gradient(90deg, rgba(255,255,255,0.035) 0 2px, transparent 2px 40px);
+    margin: 0 -20px 32px;
+    padding: 48px 20px 36px;
+    text-align: center;
+    border-bottom: 4px solid var(--amber);
+  }
+  .stadium-header h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 52px;
+    letter-spacing: 2px;
+    color: var(--chalk);
+    margin: 0;
+    line-height: 1;
+  }
+  .stadium-header .accent { color: var(--amber); }
+  .stadium-header p {
+    color: #B9CFC2;
+    font-size: 14px;
+    margin: 10px 0 0;
+    letter-spacing: 0.5px;
+  }
+
+  .card {
+    background: white;
+    border-radius: 4px;
+    padding: 28px;
+    border: 1px solid var(--line);
+    box-shadow: 0 4px 0 var(--line);
+  }
+
+  label {
+    display: block;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    margin-top: 22px;
+    color: var(--pitch-dark);
+  }
+  label:first-child { margin-top: 0; }
+
+  select, input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 15px;
+    font-family: 'Inter', sans-serif;
+    border-radius: 4px;
+    border: 2px solid var(--line);
+    background: var(--chalk);
+    color: var(--ink);
+  }
+  select:focus, input:focus, textarea:focus {
+    outline: none;
+    border-color: var(--pitch-green);
+  }
+  textarea { height: 140px; resize: vertical; font-family: 'Space Mono', monospace; font-size: 14px; }
+  .hint { font-size: 12px; color: #7A7565; margin-top: 6px; line-height: 1.5; }
+
+  .points-row { display: flex; gap: 10px; }
+  .points-row > div { flex: 1; }
+  .points-row .hint { margin-top: 0; margin-bottom: 6px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--pitch-green); }
+
+  button {
+    display: block;
+    width: 100%;
+    padding: 16px;
+    margin-top: 28px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 20px;
+    letter-spacing: 1.5px;
+    background: var(--amber);
+    color: var(--ink);
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #C98A0F;
+    transition: transform 0.1s;
+  }
+  button:hover { transform: translateY(1px); box-shadow: 0 3px 0 #C98A0F; }
+  button:active { transform: translateY(4px); box-shadow: none; }
+  button:disabled { background: #E8DCC0; box-shadow: none; cursor: not-allowed; }
+
+  #error {
+    display: none;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: #FDECEC;
+    color: #A3312A;
+    border-left: 4px solid #C0392B;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  #successBox {
+    display: none;
+    margin-top: 24px;
+    padding: 20px;
+    background: var(--pitch-dark);
+    border-radius: 4px;
+    text-align: center;
+  }
+  #successBox p {
+    color: var(--chalk);
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 22px;
+    letter-spacing: 1px;
+    margin: 0 0 12px;
+  }
+  #successBox a {
+    display: inline-block;
+    padding: 12px 28px;
+    background: var(--amber);
+    color: var(--ink);
+    text-decoration: none;
+    border-radius: 4px;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 18px;
+    letter-spacing: 1px;
+  }
+</style>
+</head>
+<body>
+
+<div class="stadium-header">
+  <h1>SCORE<span class="accent">BOARD</span></h1>
+  <p>DEVNTRIC TOURNAMENT SCHEDULER</p>
+</div>
+
+<div class="card">
+  <label for="gameType">Game</label>
+  <select id="gameType" onchange="applyGamePreset()">
+    <option value="football">⚽ Football</option>
+    <option value="cricket">🏏 Cricket</option>
+    <option value="hockey">🏑 Hockey</option>
+    <option value="badminton">🏸 Badminton</option>
+    <option value="tennis">🎾 Tennis</option>
+    <option value="chess">♟️ Chess</option>
+    <option value="other">🎮 Other</option>
+  </select>
+  <div class="hint">Cricket uses runs/wickets scoring. Others use standard score-vs-score.</div>
+
+  <label for="tournamentName">Tournament Name</label>
+  <input type="text" id="tournamentName" placeholder="e.g. Inter-Department Cup 2026">
+
+  <label for="teamsInput">Teams (one per line)</label>
+  <textarea id="teamsInput" placeholder="Bangladesh&#10;India&#10;Pakistan&#10;Sri Lanka&#10;Nepal"></textarea>
+  <div class="hint">Minimum 2 teams.</div>
+
+  <label for="numGroups">Number of Groups</label>
+  <input type="number" id="numGroups" value="1" min="1">
+  <div class="hint">Teams split evenly across groups. Use 1 for a single round-robin.</div>
+
+  <label>Points System</label>
+  <div class="points-row">
+    <div>
+      <div class="hint">Win</div>
+      <input type="number" id="pointsWin" value="3" min="0">
+    </div>
+    <div>
+      <div class="hint">Draw</div>
+      <input type="number" id="pointsDraw" value="1" min="0">
+    </div>
+    <div>
+      <div class="hint">Loss</div>
+      <input type="number" id="pointsLoss" value="0" min="0">
+    </div>
+  </div>
+
+  <div id="error"></div>
+
+  <button id="createBtn" onclick="createTournament()">CREATE TOURNAMENT</button>
+
+  <div id="successBox">
+    <p>TOURNAMENT CREATED</p>
+    <a id="viewLink" href="#">VIEW TOURNAMENT →</a>
+  </div>
+</div>
+
+<script>
+const API_BASE = "http://127.0.0.1:8000";
+
+const GAME_PRESETS = {
+  football:  { win: 3, draw: 1, loss: 0 },
+  cricket:   { win: 2, draw: 1, loss: 0 },
+  hockey:    { win: 3, draw: 1, loss: 0 },
+  badminton: { win: 1, draw: 0, loss: 0 },
+  tennis:    { win: 1, draw: 0, loss: 0 },
+  chess:     { win: 1, draw: 0, loss: 0 },
+  other:     { win: 3, draw: 1, loss: 0 }
+};
+
+function applyGamePreset() {
+  const gameType = document.getElementById("gameType").value;
+  const preset = GAME_PRESETS[gameType];
+  document.getElementById("pointsWin").value = preset.win;
+  document.getElementById("pointsDraw").value = preset.draw;
+  document.getElementById("pointsLoss").value = preset.loss;
+}
+
+async function createTournament() {
+  const gameType = document.getElementById("gameType").value;
+  const name = document.getElementById("tournamentName").value.trim();
+  const teamsRaw = document.getElementById("teamsInput").value.trim();
+  const numGroups = parseInt(document.getElementById("numGroups").value);
+  const pointsWin = parseInt(document.getElementById("pointsWin").value);
+  const pointsDraw = parseInt(document.getElementById("pointsDraw").value);
+  const pointsLoss = parseInt(document.getElementById("pointsLoss").value);
+  const errorDiv = document.getElementById("error");
+  const btn = document.getElementById("createBtn");
+  const successBox = document.getElementById("successBox");
+
+  errorDiv.style.display = "none";
+  successBox.style.display = "none";
+
+  const teams = teamsRaw.split("\n").map(t => t.trim()).filter(t => t.length > 0);
+
+  if (!name) { showError("Please enter a tournament name."); return; }
+  if (teams.length < 2) { showError("Please enter at least 2 team names."); return; }
+  if (!numGroups || numGroups < 1) { showError("Number of groups must be at least 1."); return; }
+  if (numGroups > teams.length) { showError("Number of groups cannot be more than the number of teams."); return; }
+
+  btn.disabled = true;
+  btn.innerText = "CREATING...";
+
+  try {
+    const response = await fetch(`${API_BASE}/tournament`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: name, teams: teams, num_groups: numGroups,
+        game_type: gameType, points_win: pointsWin, points_draw: pointsDraw, points_loss: pointsLoss
+      })
+    });
+
+    if (!response.ok) {
+      const errData = await response.json();
+      throw new Error(errData.detail || "Something went wrong");
+    }
+
+    const data = await response.json();
+    document.getElementById("viewLink").href = `tournament.html?id=${data.tournament_id}`;
+    successBox.style.display = "block";
+
+  } catch (error) {
+    showError(error.message || "Could not reach the server. Is it running?");
+  } finally {
+    btn.disabled = false;
+    btn.innerText = "CREATE TOURNAMENT";
+  }
+}
+
+function showError(msg) {
+  const errorDiv = document.getElementById("error");
+  errorDiv.innerText = msg;
+  errorDiv.style.display = "block";
+}
+</script>
+
+</body>
+</html>
