@@ -198,4 +198,6 @@ button:disabled { background: #33333F; cursor: not-allowed; filter: none; }
   background-clip: text;
   color: transparent;
   font-weight: 600;
+  text-decoration: none;
 }
+a.footer-highlight:hover { text-decoration: underline; }
