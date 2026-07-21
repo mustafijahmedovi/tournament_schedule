@@ -7,19 +7,22 @@
 </head>
 <body>
 
-<h1>🏆 Tournament Scheduler</h1>
-<p class="subtitle">Create a round-robin tournament with groups</p>
+<div class="brand-header">
+  <img src="devntric-icon-circle.png" alt="Devntric">
+  <h1>Tournament Scheduler</h1>
+  <p>Create a round-robin tournament with groups</p>
+</div>
 
 <div class="card">
   <label for="tournamentFormat">Tournament Format</label>
-  <select id="tournamentFormat" onchange="toggleFormatFields()" style="width:100%; padding:10px 12px; font-size:15px; border-radius:8px; border:1px solid #ddd;">
+  <select id="tournamentFormat" onchange="toggleFormatFields()">
     <option value="league">🏁 Group Stage (Round Robin)</option>
     <option value="knockout">⚔️ Direct Knockout (Single Elimination)</option>
   </select>
   <div class="hint">Direct Knockout: no groups, no round robin — lose once and you're out. You'll build the bracket manually on the next page.</div>
 
   <label for="gameType">Game Type</label>
-  <select id="gameType" onchange="applyGamePreset()" style="width:100%; padding:10px 12px; font-size:15px; border-radius:8px; border:1px solid #ddd;">
+  <select id="gameType" onchange="applyGamePreset()">
     <option value="football">⚽ Football</option>
     <option value="cricket">🏏 Cricket</option>
     <option value="hockey">🏑 Hockey</option>
@@ -199,6 +202,13 @@ function showError(msg) {
   errorDiv.style.display = "block";
 }
 </script>
+
+<footer class="devntric-footer">
+  <img src="devntric-icon-circle.png" alt="Devntric">
+  <div class="footer-brand">TOURNAMENT SCHEDULER <span class="version">v1.0.0</span></div>
+  <div class="footer-credit">Developed by <span class="footer-highlight">Mustafij Ahmed Ovi</span></div>
+  <div class="footer-copyright">© 2026 All Rights Reserved. <span class="footer-highlight">Devntric</span></div>
+</footer>
 
 </body>
 </html>

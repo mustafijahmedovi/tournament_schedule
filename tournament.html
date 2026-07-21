@@ -11,6 +11,9 @@
 <div id="errorBox" class="error-box" style="display:none;"></div>
 
 <div id="content" style="display:none;">
+  <div style="text-align:center; padding-top:24px;">
+    <img src="devntric-icon-circle.png" alt="Devntric" style="width:36px; height:36px;">
+  </div>
   <h1 id="tournamentName">🏆 Tournament</h1>
   <p class="subtitle">Share this page's link so others can view live standings</p>
 
@@ -23,7 +26,7 @@
 
   <div class="card" id="firstRoundCard">
     <h2>First Round</h2>
-    <div id="matchesSummary" style="font-size:13px; color:#666; margin-bottom:12px;"></div>
+    <div id="matchesSummary" style="font-size:13px; color:#9494A8; margin-bottom:12px;"></div>
     <div id="scheduleList"></div>
   </div>
 
@@ -32,36 +35,43 @@
     <div id="championBanner"></div>
     <div id="knockoutList"></div>
 
-    <div id="addRoundSection" style="margin-top:20px; padding-top:16px; border-top:1px solid #eee;">
-      <button onclick="toggleAddRoundForm()" style="width:auto; padding:8px 16px; font-size:14px; background:#2563eb;">+ Add Knockout Round</button>
+    <div id="addRoundSection" style="margin-top:20px; padding-top:16px; border-top:1px solid #26263A;">
+      <button onclick="toggleAddRoundForm()" style="width:auto; padding:8px 16px; font-size:14px; background:#A238FF;">+ Add Knockout Round</button>
 
       <div id="addRoundForm" style="display:none; margin-top:16px;">
         <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Round Name</label>
-        <select id="roundNameSelect" onchange="handleRoundNameSelect()" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:8px;"></select>
-        <input type="text" id="roundNameInput" placeholder="Enter round name" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:12px; display:none;">
+        <select id="roundNameSelect" onchange="handleRoundNameSelect()" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #26263A; margin-bottom:8px;"></select>
+        <input type="text" id="roundNameInput" placeholder="Enter round name" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #26263A; margin-bottom:12px; display:none;">
 
         <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Fixture Selection</label>
         <div style="display:flex; gap:8px; margin-bottom:14px;">
-          <button type="button" id="fixtureModeAutoBtn" onclick="setFixtureMode('automatic')" style="flex:1; padding:8px; font-size:13px; background:#2563eb; margin-top:0;">Automatic</button>
-          <button type="button" id="fixtureModeManualBtn" onclick="setFixtureMode('manual')" style="flex:1; padding:8px; font-size:13px; background:#e5e7eb; color:#333; margin-top:0;">User Select</button>
+          <button type="button" id="fixtureModeAutoBtn" onclick="setFixtureMode('automatic')" style="flex:1; padding:8px; font-size:13px; background:#A238FF; margin-top:0;">Automatic</button>
+          <button type="button" id="fixtureModeManualBtn" onclick="setFixtureMode('manual')" style="flex:1; padding:8px; font-size:13px; background:#22222E; color:#F1F1F6; margin-top:0;">User Select</button>
         </div>
 
-        <div id="automaticFixtureInfo" style="display:none; font-size:13px; color:#666; margin-bottom:12px; padding:10px; background:#eff6ff; border-radius:6px;"></div>
+        <div id="automaticFixtureInfo" style="display:none; font-size:13px; color:#9494A8; margin-bottom:12px; padding:10px; background:#1A1626; border-radius:6px;"></div>
 
         <div id="manualFixtureSection" style="display:none;">
           <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Matchups</label>
           <div id="matchupRows"></div>
-          <button onclick="addMatchupRow()" style="width:auto; padding:6px 12px; font-size:13px; background:#e5e7eb; color:#333; margin-top:6px;">+ Add Matchup</button>
+          <button onclick="addMatchupRow()" style="width:auto; padding:6px 12px; font-size:13px; background:#22222E; color:#F1F1F6; margin-top:6px;">+ Add Matchup</button>
         </div>
 
         <div style="display:flex; gap:8px; margin-top:16px;">
-          <button onclick="submitNewRound()" style="background:#15803d;">Save Round</button>
-          <button onclick="toggleAddRoundForm()" style="background:#6b7280;">Cancel</button>
+          <button onclick="submitNewRound()" style="background:#22C55E;">Save Round</button>
+          <button onclick="toggleAddRoundForm()" style="background:#33333F;">Cancel</button>
         </div>
       </div>
     </div>
   </div>
 </div>
+
+<footer class="devntric-footer">
+  <img src="devntric-icon-circle.png" alt="Devntric">
+  <div class="footer-brand">TOURNAMENT SCHEDULER <span class="version">v1.0.0</span></div>
+  <div class="footer-credit">Developed by <span class="footer-highlight">Mustafij Ahmed Ovi</span></div>
+  <div class="footer-copyright">© 2026 All Rights Reserved. <span class="footer-highlight">Devntric</span></div>
+</footer>
 
 <script>
 const API_BASE = "http://127.0.0.1:8000";
@@ -168,16 +178,16 @@ function renderMatchMetaBlock(keyPrefix, matchTime, location) {
     displayParts.push(`🕐 ${d.toLocaleString()}`);
   }
   if (location) displayParts.push(`📍 ${escapeHtml(location)}`);
-  const displayText = hasInfo ? displayParts.join(" &nbsp;·&nbsp; ") : '<span style="color:#bbb;">No time or location set</span>';
+  const displayText = hasInfo ? displayParts.join(" &nbsp;·&nbsp; ") : '<span style="color:#6A6A80;">No time or location set</span>';
 
   return `
     <div class="match-meta" id="metaDisplay_${keyPrefix}">
-      <span style="font-size:12px; color:#666;">${displayText}</span>
-      <button onclick="toggleMetaEdit('${keyPrefix}')" style="width:auto; padding:2px 8px; font-size:11px; background:#e5e7eb; color:#333; margin-top:0;">${hasInfo ? "Edit" : "+ Add time/location"}</button>
+      <span style="font-size:12px; color:#9494A8;">${displayText}</span>
+      <button onclick="toggleMetaEdit('${keyPrefix}')" style="width:auto; padding:2px 8px; font-size:11px; background:#22222E; color:#F1F1F6; margin-top:0;">${hasInfo ? "Edit" : "+ Add time/location"}</button>
     </div>
     <div class="match-meta-edit" id="metaEdit_${keyPrefix}" style="display:none;">
-      <input type="datetime-local" id="metaTime_${keyPrefix}" value="${matchTime ? matchTime : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #ddd;">
-      <input type="text" id="metaLocation_${keyPrefix}" placeholder="Location (e.g. City Stadium)" value="${location ? escapeHtml(location) : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #ddd; flex:1; min-width:120px;">
+      <input type="datetime-local" id="metaTime_${keyPrefix}" value="${matchTime ? matchTime : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #26263A;">
+      <input type="text" id="metaLocation_${keyPrefix}" placeholder="Location (e.g. City Stadium)" value="${location ? escapeHtml(location) : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #26263A; flex:1; min-width:120px;">
       <button onclick="saveMetaEdit('${keyPrefix}')" style="width:auto; padding:5px 10px; font-size:11px;">Save</button>
     </div>
   `;
@@ -255,7 +265,7 @@ function renderSchedule() {
 
   if (tournamentData.groups.length > 1) {
     const letter = String.fromCharCode(65 + currentGroup);
-    html += `<div style="font-size:13px; font-weight:600; color:#2563eb; margin-bottom:14px;">GROUP ${letter}</div>`;
+    html += `<div style="font-size:13px; font-weight:600; color:#A238FF; margin-bottom:14px;">GROUP ${letter}</div>`;
   }
 
   groupSchedule.forEach((roundMatches, roundIndex) => {
@@ -507,18 +517,18 @@ function setFixtureMode(mode) {
   const manualSection = document.getElementById("manualFixtureSection");
 
   if (mode === "automatic") {
-    autoBtn.style.background = "#2563eb";
+    autoBtn.style.background = "#A238FF";
     autoBtn.style.color = "white";
-    manualBtn.style.background = "#e5e7eb";
-    manualBtn.style.color = "#333";
+    manualBtn.style.background = "#22222E";
+    manualBtn.style.color = "#F1F1F6";
     autoInfo.style.display = "block";
     manualSection.style.display = "none";
     generateAutomaticFixture();
   } else {
-    manualBtn.style.background = "#2563eb";
+    manualBtn.style.background = "#A238FF";
     manualBtn.style.color = "white";
-    autoBtn.style.background = "#e5e7eb";
-    autoBtn.style.color = "#333";
+    autoBtn.style.background = "#22222E";
+    autoBtn.style.color = "#F1F1F6";
     autoInfo.style.display = "none";
     manualSection.style.display = "block";
   }
@@ -565,14 +575,14 @@ function addMatchupRow() {
   const row = document.createElement("div");
   row.style.cssText = "display:flex; gap:8px; align-items:center; margin-bottom:8px;";
   row.innerHTML = `
-    <select class="matchup-team1" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ddd;" onchange="refreshMatchupOptions(this)">
+    <select class="matchup-team1" style="flex:1; padding:8px; border-radius:6px; border:1px solid #26263A;" onchange="refreshMatchupOptions(this)">
       <option value="">Select team</option>${options}
     </select>
-    <span style="color:#999;">vs</span>
-    <select class="matchup-team2" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ddd;" onchange="refreshMatchupOptions(this)">
+    <span style="color:#7A7A90;">vs</span>
+    <select class="matchup-team2" style="flex:1; padding:8px; border-radius:6px; border:1px solid #26263A;" onchange="refreshMatchupOptions(this)">
       <option value="">Select team</option>${options}
     </select>
-    <button onclick="this.parentElement.remove()" style="width:auto; padding:8px 10px; background:#fee2e2; color:#b91c1c; font-size:13px;">✕</button>
+    <button onclick="this.parentElement.remove()" style="width:auto; padding:8px 10px; background:#3A1620; color:#FF6B87; font-size:13px;">✕</button>
   `;
   container.appendChild(row);
 }
@@ -688,7 +698,7 @@ function renderKnockout() {
   }
 
   if (knockout.length === 0) {
-    container.innerHTML = '<p style="color:#999; font-size:14px;">No knockout rounds yet. Add one below once your group stage is ready.</p>';
+    container.innerHTML = '<p style="color:#7A7A90; font-size:14px;">No knockout rounds yet. Add one below once your group stage is ready.</p>';
     return;
   }
 
@@ -701,10 +711,10 @@ function renderKnockout() {
     html += `
       <div style="margin-bottom:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
-          <div style="font-weight:700; font-size:15px; color:#1a1a2e;">${escapeHtml(round.round_name)}</div>
-          <button onclick="deleteKnockoutRound(${roundIndex})" style="width:auto; padding:4px 10px; font-size:12px; background:#fee2e2; color:#b91c1c;">Remove Round</button>
+          <div style="font-weight:700; font-size:15px; color:#F1F1F6;">${escapeHtml(round.round_name)}</div>
+          <button onclick="deleteKnockoutRound(${roundIndex})" style="width:auto; padding:4px 10px; font-size:12px; background:#3A1620; color:#FF6B87;">Remove Round</button>
         </div>
-        <div style="font-size:12px; color:#888; margin-bottom:8px;">${playedInRound} of ${totalInRound} matches played</div>
+        <div style="font-size:12px; color:#8888A0; margin-bottom:8px;">${playedInRound} of ${totalInRound} matches played</div>
     `;
 
     round.matches.forEach((match, matchIndex) => {
@@ -752,8 +762,8 @@ function renderKnockout() {
               ${scoreInputs}
             </div>
             <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
-              <label style="font-size:12px; color:#666;">Winner:</label>
-              <select id="ko_winner_${roundIndex}_${matchIndex}" style="flex:1; padding:6px; border-radius:6px; border:1px solid #ddd;">
+              <label style="font-size:12px; color:#9494A8;">Winner:</label>
+              <select id="ko_winner_${roundIndex}_${matchIndex}" style="flex:1; padding:6px; border-radius:6px; border:1px solid #26263A;">
                 <option value="">Select winner</option>
                 <option value="${escapeHtml(match.team1)}">${escapeHtml(match.team1)}</option>
                 <option value="${escapeHtml(match.team2)}">${escapeHtml(match.team2)}</option>

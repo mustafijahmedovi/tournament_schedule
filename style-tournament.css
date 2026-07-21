@@ -1,26 +1,43 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=Inter:wght@400;500;600;700&display=swap');
+
 * { box-sizing: border-box; }
   body {
-    font-family: 'Segoe UI', Arial, sans-serif;
+    font-family: 'Inter', sans-serif;
     max-width: 900px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #f0f2f5;
-    color: #1a1a1a;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    background: #0A0A0F;
+    color: #F1F1F6;
   }
-  h1 { text-align: center; color: #1a1a2e; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #666; margin-bottom: 28px; font-size: 14px; }
+  .brand-header {
+    text-align: center;
+    padding: 36px 0 20px;
+  }
+  .brand-header img { width: 48px; height: 48px; margin-bottom: 10px; }
+  .brand-header h1 {
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 26px;
+    font-weight: 700;
+    margin: 0;
+    background: linear-gradient(135deg, #FF3B6B, #A238FF, #FF8A3D);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .brand-header p { color: #9494A8; font-size: 13px; margin: 10px 0 0; }
+  .subtitle { text-align: center; color: #9494A8; margin-bottom: 28px; font-size: 14px; }
   .card {
-    background: white;
+    background: #15151F;
     border-radius: 12px;
     padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    border: 1px solid #26263A;
     margin-bottom: 24px;
   }
   .card h2 {
     margin-top: 0;
     font-size: 18px;
-    color: #1a1a2e;
-    border-bottom: 2px solid #f0f2f5;
+    color: #F1F1F6;
+    border-bottom: 2px solid #0A0A0F;
     padding-bottom: 10px;
   }
 
@@ -32,32 +49,32 @@
   th, td {
     padding: 8px 10px;
     text-align: center;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #26263A;
   }
   th {
-    background: #f8f9fb;
-    color: #555;
+    background: #0F0F17;
+    color: #9494A8;
     font-size: 12px;
     text-transform: uppercase;
   }
   td.team-name { text-align: left; font-weight: 600; }
-  tr:first-child td.team-name { color: #15803d; }
+  tr:first-child td.team-name { color: #22C55E; }
 
   .round-block { margin-bottom: 18px; }
-  .round-title { font-weight: 600; font-size: 14px; color: #444; margin-bottom: 8px; }
+  .round-title { font-weight: 600; font-size: 14px; color: #B0B0C0; margin-bottom: 8px; }
   .match-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     padding: 10px 12px;
-    background: #f8f9fb;
+    background: #0F0F17;
     border-radius: 8px;
     margin-bottom: 6px;
     flex-wrap: wrap;
     gap: 8px;
   }
   .match-teams { font-size: 14px; flex: 1; min-width: 160px; }
-  .bye-row { color: #999; font-style: italic; }
+  .bye-row { color: #7A7A90; font-style: italic; }
   .score-inputs {
     display: flex;
     align-items: center;
@@ -67,26 +84,26 @@
     width: 46px;
     padding: 6px;
     text-align: center;
-    border: 1px solid #ddd;
+    border: 1px solid #26263A;
     border-radius: 6px;
     font-size: 14px;
   }
   .score-inputs button {
     padding: 6px 12px;
     font-size: 13px;
-    background: #2563eb;
-    color: white;
+    background: #A238FF;
+    color: #FFFFFF;
     border: none;
     border-radius: 6px;
     cursor: pointer;
     font-weight: 600;
   }
-  .score-inputs button:hover { background: #1d4ed8; }
+  .score-inputs button:hover { background: #8B2FE0; }
   .played-badge {
     font-size: 12px;
     font-weight: 600;
-    color: #15803d;
-    background: #dcfce7;
+    color: #22C55E;
+    background: #16301F;
     padding: 4px 10px;
     border-radius: 12px;
   }
@@ -100,21 +117,21 @@
   .group-tab {
     padding: 8px 16px;
     border-radius: 8px;
-    background: #e5e7eb;
-    color: #333;
+    background: #22222E;
+    color: #F1F1F6;
     cursor: pointer;
     font-size: 14px;
     font-weight: 600;
     border: none;
   }
   .group-tab.active {
-    background: #2563eb;
-    color: white;
+    background: #A238FF;
+    color: #FFFFFF;
   }
   .loading, .error-box {
     text-align: center;
     padding: 40px;
-    color: #666;
+    color: #9494A8;
   }
 
   .match-meta {
@@ -123,7 +140,7 @@
     align-items: center;
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px dashed #e5e5e5;
+    border-top: 1px dashed #26263A;
     width: 100%;
   }
   .match-meta-edit {
@@ -132,7 +149,7 @@
     gap: 6px;
     margin-top: 6px;
     padding-top: 6px;
-    border-top: 1px dashed #e5e5e5;
+    border-top: 1px dashed #26263A;
     flex-wrap: wrap;
     width: 100%;
   }
@@ -140,9 +157,9 @@
   .champion-banner {
     text-align: center;
     padding: 36px 20px;
-    background: linear-gradient(135deg, #fef3c7, #fde68a);
+    background: linear-gradient(135deg, #241A0A, #3A2A10);
     border-radius: 12px;
-    border: 2px solid #f59e0b;
+    border: 2px solid #FF8A3D;
     margin-bottom: 20px;
   }
   .champion-trophy {
@@ -159,19 +176,19 @@
     font-weight: 700;
     letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #92400e;
+    color: #FFB347;
     margin: 12px 0 4px;
   }
   .champion-name {
     font-size: 28px;
     font-weight: 800;
-    color: #78350f;
+    color: #FFD9A0;
     margin: 0;
   }
   .runner-up-box {
     margin-top: 18px;
     padding-top: 16px;
-    border-top: 1px dashed #f0c674;
+    border-top: 1px dashed #4A3A18;
   }
   .runner-up-medal { font-size: 24px; }
   .runner-up-title {
@@ -179,12 +196,36 @@
     font-weight: 700;
     letter-spacing: 1px;
     text-transform: uppercase;
-    color: #a16207;
+    color: #FFB347;
     margin: 6px 0 2px;
   }
   .runner-up-name {
     font-size: 18px;
     font-weight: 700;
-    color: #92400e;
+    color: #FFB347;
     margin: 0;
+  }
+
+  .devntric-footer {
+    text-align: center;
+    margin-top: 32px;
+    padding-top: 28px;
+    border-top: 1px solid #26263A;
+  }
+  .devntric-footer img { width: 32px; height: 32px; margin-bottom: 8px; }
+  .footer-brand {
+    font-family: 'Space Grotesk', sans-serif;
+    font-weight: 700;
+    font-size: 14px;
+    letter-spacing: 0.5px;
+    color: #F1F1F6;
+  }
+  .footer-brand .version { color: #9494A8; font-weight: 500; font-size: 12px; margin-left: 4px; }
+  .footer-credit, .footer-copyright { font-size: 12px; color: #9494A8; margin-top: 6px; }
+  .footer-highlight {
+    background: linear-gradient(135deg, #FF3B6B, #A238FF, #FF8A3D);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    font-weight: 600;
   }
