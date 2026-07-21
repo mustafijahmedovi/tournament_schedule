@@ -1,0 +1,110 @@
+* { box-sizing: border-box; }
+  body {
+    font-family: 'Segoe UI', Arial, sans-serif;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 20px;
+    background: #f0f2f5;
+    color: #1a1a1a;
+  }
+  h1 { text-align: center; color: #1a1a2e; margin-bottom: 4px; }
+  .subtitle { text-align: center; color: #666; margin-bottom: 28px; font-size: 14px; }
+  .card {
+    background: white;
+    border-radius: 12px;
+    padding: 24px;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+  }
+  label {
+    display: block;
+    font-weight: 600;
+    font-size: 14px;
+    margin-bottom: 6px;
+    margin-top: 16px;
+    color: #333;
+  }
+  label:first-child { margin-top: 0; }
+  input[type="text"], input[type="number"], textarea {
+    width: 100%;
+    padding: 10px 12px;
+    font-size: 15px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    font-family: inherit;
+  }
+  input:focus, textarea:focus { outline: none; border-color: #2563eb; }
+  textarea { height: 140px; resize: vertical; }
+
+  .textarea-wrapper {
+    display: flex;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .line-numbers {
+    background: #f3f4f6;
+    color: #999;
+    font-size: 15px;
+    font-family: monospace;
+    padding: 10px 8px;
+    text-align: right;
+    line-height: 1.5;
+    user-select: none;
+    white-space: pre;
+    border-right: 1px solid #ddd;
+    overflow: hidden;
+  }
+  .textarea-wrapper textarea {
+    border: none;
+    border-radius: 0;
+    line-height: 1.5;
+    flex: 1;
+  }
+  .textarea-wrapper textarea:focus {
+    border: none;
+  }
+  .hint { font-size: 12px; color: #888; margin-top: 4px; }
+  button {
+    display: block;
+    width: 100%;
+    padding: 13px;
+    margin-top: 22px;
+    font-size: 15px;
+    font-weight: 600;
+    background: #2563eb;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+  }
+  button:hover { background: #1d4ed8; }
+  button:disabled { background: #93c5fd; cursor: not-allowed; }
+  #error {
+    display: none;
+    margin-top: 12px;
+    padding: 10px 14px;
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    font-size: 14px;
+  }
+  #successBox {
+    display: none;
+    margin-top: 20px;
+    padding: 16px;
+    background: #dcfce7;
+    border: 1px solid #86efac;
+    border-radius: 8px;
+    text-align: center;
+  }
+  #successBox a {
+    display: inline-block;
+    margin-top: 8px;
+    padding: 10px 20px;
+    background: #15803d;
+    color: white;
+    text-decoration: none;
+    border-radius: 8px;
+    font-weight: 600;
+  }

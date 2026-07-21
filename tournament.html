@@ -3,126 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Tournament View</title>
-<style>
-  * { box-sizing: border-box; }
-  body {
-    font-family: 'Segoe UI', Arial, sans-serif;
-    max-width: 900px;
-    margin: 40px auto;
-    padding: 20px;
-    background: #f0f2f5;
-    color: #1a1a1a;
-  }
-  h1 { text-align: center; color: #1a1a2e; margin-bottom: 4px; }
-  .subtitle { text-align: center; color: #666; margin-bottom: 28px; font-size: 14px; }
-  .card {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-    margin-bottom: 24px;
-  }
-  .card h2 {
-    margin-top: 0;
-    font-size: 18px;
-    color: #1a1a2e;
-    border-bottom: 2px solid #f0f2f5;
-    padding-bottom: 10px;
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 14px;
-  }
-  th, td {
-    padding: 8px 10px;
-    text-align: center;
-    border-bottom: 1px solid #eee;
-  }
-  th {
-    background: #f8f9fb;
-    color: #555;
-    font-size: 12px;
-    text-transform: uppercase;
-  }
-  td.team-name { text-align: left; font-weight: 600; }
-  tr:first-child td.team-name { color: #15803d; }
-
-  .round-block { margin-bottom: 18px; }
-  .round-title { font-weight: 600; font-size: 14px; color: #444; margin-bottom: 8px; }
-  .match-row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 10px 12px;
-    background: #f8f9fb;
-    border-radius: 8px;
-    margin-bottom: 6px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-  .match-teams { font-size: 14px; flex: 1; min-width: 160px; }
-  .bye-row { color: #999; font-style: italic; }
-  .score-inputs {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-  }
-  .score-inputs input {
-    width: 46px;
-    padding: 6px;
-    text-align: center;
-    border: 1px solid #ddd;
-    border-radius: 6px;
-    font-size: 14px;
-  }
-  .score-inputs button {
-    padding: 6px 12px;
-    font-size: 13px;
-    background: #2563eb;
-    color: white;
-    border: none;
-    border-radius: 6px;
-    cursor: pointer;
-    font-weight: 600;
-  }
-  .score-inputs button:hover { background: #1d4ed8; }
-  .played-badge {
-    font-size: 12px;
-    font-weight: 600;
-    color: #15803d;
-    background: #dcfce7;
-    padding: 4px 10px;
-    border-radius: 12px;
-  }
-
-  .group-tabs {
-    display: flex;
-    gap: 8px;
-    margin-bottom: 16px;
-    flex-wrap: wrap;
-  }
-  .group-tab {
-    padding: 8px 16px;
-    border-radius: 8px;
-    background: #e5e7eb;
-    color: #333;
-    cursor: pointer;
-    font-size: 14px;
-    font-weight: 600;
-    border: none;
-  }
-  .group-tab.active {
-    background: #2563eb;
-    color: white;
-  }
-  .loading, .error-box {
-    text-align: center;
-    padding: 40px;
-    color: #666;
-  }
-</style>
+<link rel="stylesheet" href="style-tournament.css">
 </head>
 <body>
 
@@ -135,14 +16,50 @@
 
   <div class="group-tabs" id="groupTabs"></div>
 
-  <div class="card">
+  <div class="card" id="standingsCard">
     <h2>Standings</h2>
     <div id="standingsTable"></div>
   </div>
 
-  <div class="card">
-    <h2>Schedule</h2>
+  <div class="card" id="firstRoundCard">
+    <h2>First Round</h2>
+    <div id="matchesSummary" style="font-size:13px; color:#666; margin-bottom:12px;"></div>
     <div id="scheduleList"></div>
+  </div>
+
+  <div class="card">
+    <h2>Knockout Stage</h2>
+    <div id="championBanner"></div>
+    <div id="knockoutList"></div>
+
+    <div id="addRoundSection" style="margin-top:20px; padding-top:16px; border-top:1px solid #eee;">
+      <button onclick="toggleAddRoundForm()" style="width:auto; padding:8px 16px; font-size:14px; background:#2563eb;">+ Add Knockout Round</button>
+
+      <div id="addRoundForm" style="display:none; margin-top:16px;">
+        <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Round Name</label>
+        <select id="roundNameSelect" onchange="handleRoundNameSelect()" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:8px;"></select>
+        <input type="text" id="roundNameInput" placeholder="Enter round name" style="width:100%; padding:8px 10px; border-radius:6px; border:1px solid #ddd; margin-bottom:12px; display:none;">
+
+        <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Fixture Selection</label>
+        <div style="display:flex; gap:8px; margin-bottom:14px;">
+          <button type="button" id="fixtureModeAutoBtn" onclick="setFixtureMode('automatic')" style="flex:1; padding:8px; font-size:13px; background:#2563eb; margin-top:0;">Automatic</button>
+          <button type="button" id="fixtureModeManualBtn" onclick="setFixtureMode('manual')" style="flex:1; padding:8px; font-size:13px; background:#e5e7eb; color:#333; margin-top:0;">User Select</button>
+        </div>
+
+        <div id="automaticFixtureInfo" style="display:none; font-size:13px; color:#666; margin-bottom:12px; padding:10px; background:#eff6ff; border-radius:6px;"></div>
+
+        <div id="manualFixtureSection" style="display:none;">
+          <label style="display:block; font-weight:600; font-size:13px; margin-bottom:6px;">Matchups</label>
+          <div id="matchupRows"></div>
+          <button onclick="addMatchupRow()" style="width:auto; padding:6px 12px; font-size:13px; background:#e5e7eb; color:#333; margin-top:6px;">+ Add Matchup</button>
+        </div>
+
+        <div style="display:flex; gap:8px; margin-top:16px;">
+          <button onclick="submitNewRound()" style="background:#15803d;">Save Round</button>
+          <button onclick="toggleAddRoundForm()" style="background:#6b7280;">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -169,9 +86,16 @@ async function loadTournament() {
     document.getElementById("loadingBox").style.display = "none";
     document.getElementById("content").style.display = "block";
 
+    const isKnockoutOnly = tournamentData.tournament_format === "knockout";
+    document.getElementById("standingsCard").style.display = isKnockoutOnly ? "none" : "block";
+    document.getElementById("firstRoundCard").style.display = isKnockoutOnly ? "none" : "block";
+
     renderGroupTabs();
-    await renderStandings();
-    renderSchedule();
+    if (!isKnockoutOnly) {
+      await renderStandings();
+      renderSchedule();
+    }
+    renderKnockout();
 
   } catch (error) {
     showError("Could not load tournament. Check the link or make sure the server is running.");
@@ -236,16 +160,106 @@ async function renderStandings() {
   }
 }
 
+function renderMatchMetaBlock(keyPrefix, matchTime, location) {
+  const hasInfo = matchTime || location;
+  const displayParts = [];
+  if (matchTime) {
+    const d = new Date(matchTime);
+    displayParts.push(`🕐 ${d.toLocaleString()}`);
+  }
+  if (location) displayParts.push(`📍 ${escapeHtml(location)}`);
+  const displayText = hasInfo ? displayParts.join(" &nbsp;·&nbsp; ") : '<span style="color:#bbb;">No time or location set</span>';
+
+  return `
+    <div class="match-meta" id="metaDisplay_${keyPrefix}">
+      <span style="font-size:12px; color:#666;">${displayText}</span>
+      <button onclick="toggleMetaEdit('${keyPrefix}')" style="width:auto; padding:2px 8px; font-size:11px; background:#e5e7eb; color:#333; margin-top:0;">${hasInfo ? "Edit" : "+ Add time/location"}</button>
+    </div>
+    <div class="match-meta-edit" id="metaEdit_${keyPrefix}" style="display:none;">
+      <input type="datetime-local" id="metaTime_${keyPrefix}" value="${matchTime ? matchTime : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #ddd;">
+      <input type="text" id="metaLocation_${keyPrefix}" placeholder="Location (e.g. City Stadium)" value="${location ? escapeHtml(location) : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #ddd; flex:1; min-width:120px;">
+      <button onclick="saveMetaEdit('${keyPrefix}')" style="width:auto; padding:5px 10px; font-size:11px;">Save</button>
+    </div>
+  `;
+}
+
+function toggleMetaEdit(keyPrefix) {
+  const display = document.getElementById(`metaDisplay_${keyPrefix}`);
+  const edit = document.getElementById(`metaEdit_${keyPrefix}`);
+  const isHidden = edit.style.display === "none";
+  edit.style.display = isHidden ? "flex" : "none";
+  display.style.display = isHidden ? "none" : "flex";
+}
+
+async function saveMetaEdit(keyPrefix) {
+  const matchTime = document.getElementById(`metaTime_${keyPrefix}`).value || null;
+  const location = document.getElementById(`metaLocation_${keyPrefix}`).value.trim() || null;
+
+  const parts = keyPrefix.split("_");
+  try {
+    if (parts[0] === "g") {
+      // group match: g_groupIndex_roundIndex_matchIndex
+      await fetch(`${API_BASE}/match-schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tournament_id: tournamentId,
+          group_index: parseInt(parts[1]),
+          round_index: parseInt(parts[2]),
+          match_index: parseInt(parts[3]),
+          match_time: matchTime,
+          location: location
+        })
+      });
+    } else {
+      // knockout match: k_roundIndex_matchIndex
+      await fetch(`${API_BASE}/knockout-schedule`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          tournament_id: tournamentId,
+          round_index: parseInt(parts[1]),
+          match_index: parseInt(parts[2]),
+          match_time: matchTime,
+          location: location
+        })
+      });
+    }
+    await refreshTournamentData();
+  } catch (error) {
+    alert("Could not save match details.");
+  }
+}
+
 function renderSchedule() {
   const container = document.getElementById("scheduleList");
+  const summaryDiv = document.getElementById("matchesSummary");
   const groupSchedule = tournamentData.schedule[currentGroup];
   const groupResults = tournamentData.results[currentGroup];
   const isCricket = tournamentData.game_type === "cricket";
 
+  // Count total real matches (excluding byes) and how many are played
+  let totalMatches = 0;
+  let playedMatches = 0;
+  groupSchedule.forEach((roundMatches, roundIndex) => {
+    roundMatches.forEach((match, matchIndex) => {
+      const [t1, t2] = match;
+      if (t1 === "BYE" || t2 === "BYE") return;
+      totalMatches++;
+      if (groupResults[roundIndex][matchIndex].played) playedMatches++;
+    });
+  });
+  summaryDiv.innerText = `${playedMatches} of ${totalMatches} matches played`;
+
   let html = "";
 
+  if (tournamentData.groups.length > 1) {
+    const letter = String.fromCharCode(65 + currentGroup);
+    html += `<div style="font-size:13px; font-weight:600; color:#2563eb; margin-bottom:14px;">GROUP ${letter}</div>`;
+  }
+
   groupSchedule.forEach((roundMatches, roundIndex) => {
-    html += `<div class="round-block"><div class="round-title">Round ${roundIndex + 1}</div>`;
+    html += `<div class="round-block"><div class="round-title">Matchday ${roundIndex + 1}</div>`;
 
     roundMatches.forEach((match, matchIndex) => {
       const [team1, team2] = match;
@@ -270,6 +284,7 @@ function renderSchedule() {
           <div class="match-row">
             <span class="match-teams">${escapeHtml(team1)} <strong>${scoreDisplay}</strong> ${escapeHtml(team2)}</span>
             <span class="played-badge">✓ Played</span>
+            ${renderMatchMetaBlock(`g_${currentGroup}_${roundIndex}_${matchIndex}`, result.match_time, result.location)}
           </div>
         `;
       } else if (isCricket) {
@@ -286,6 +301,7 @@ function renderSchedule() {
               <input type="number" min="0" max="10" id="wkts2_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:50px;">
               <button onclick="submitCricketResult(${roundIndex}, ${matchIndex})">Save</button>
             </div>
+            ${renderMatchMetaBlock(`g_${currentGroup}_${roundIndex}_${matchIndex}`, result.match_time, result.location)}
           </div>
         `;
       } else {
@@ -298,6 +314,7 @@ function renderSchedule() {
               <input type="number" min="0" id="score2_${roundIndex}_${matchIndex}" placeholder="0">
               <button onclick="submitResult(${roundIndex}, ${matchIndex})">Save</button>
             </div>
+            ${renderMatchMetaBlock(`g_${currentGroup}_${roundIndex}_${matchIndex}`, result.match_time, result.location)}
           </div>
         `;
       }
@@ -390,6 +407,420 @@ function showError(msg) {
   const errorBox = document.getElementById("errorBox");
   errorBox.innerText = msg;
   errorBox.style.display = "block";
+}
+
+function getAllTeamNames() {
+  // Flatten all teams across all groups
+  let allTeams = [];
+  tournamentData.groups.forEach(group => {
+    group.forEach(team => allTeams.push(team));
+  });
+  return allTeams;
+}
+
+function getEliminatedTeams() {
+  const knockout = tournamentData.knockout || [];
+  const eliminated = new Set();
+  knockout.forEach(round => {
+    round.matches.forEach(match => {
+      if (match.played) {
+        const loser = match.winner === match.team1 ? match.team2 : match.team1;
+        eliminated.add(loser);
+      }
+    });
+  });
+  return eliminated;
+}
+
+function getAvailableTeamsForKnockout() {
+  const eliminated = getEliminatedTeams();
+  return getAllTeamNames().filter(team => !eliminated.has(team));
+}
+
+function getChampion() {
+  const knockout = tournamentData.knockout || [];
+  if (knockout.length === 0) return null;
+  const lastRound = knockout[knockout.length - 1];
+  // A "final" is any round with exactly one match, once that match is played
+  if (lastRound.matches.length === 1 && lastRound.matches[0].played) {
+    const finalMatch = lastRound.matches[0];
+    const runnerUp = finalMatch.winner === finalMatch.team1 ? finalMatch.team2 : finalMatch.team1;
+    return { champion: finalMatch.winner, runnerUp: runnerUp };
+  }
+  return null;
+}
+
+const PRESET_ROUND_NAMES = ["First Round", "Second Round", "Round of 16", "Quarterfinal", "Semifinal", "Final"];
+
+function getUsedRoundNames() {
+  const knockout = tournamentData.knockout || [];
+  return new Set(knockout.map(r => r.round_name));
+}
+
+function populateRoundNameSelect() {
+  const usedNames = getUsedRoundNames();
+  const availablePresets = PRESET_ROUND_NAMES.filter(name => !usedNames.has(name));
+
+  const select = document.getElementById("roundNameSelect");
+  let optionsHtml = availablePresets.map(name => `<option value="${escapeHtml(name)}">${escapeHtml(name)}</option>`).join("");
+  optionsHtml += `<option value="__custom__">Choose name...</option>`;
+  select.innerHTML = optionsHtml;
+
+  handleRoundNameSelect();
+}
+
+function handleRoundNameSelect() {
+  const select = document.getElementById("roundNameSelect");
+  const customInput = document.getElementById("roundNameInput");
+
+  if (select.value === "__custom__") {
+    customInput.style.display = "block";
+    customInput.value = "";
+  } else {
+    customInput.style.display = "none";
+    customInput.value = select.value;
+  }
+}
+
+let currentFixtureMode = "automatic";
+let autoFixturePairs = [];
+let autoFixtureByeTeam = null;
+
+function toggleAddRoundForm() {
+  const form = document.getElementById("addRoundForm");
+  const isHidden = form.style.display === "none";
+  form.style.display = isHidden ? "block" : "none";
+  if (isHidden) {
+    document.getElementById("matchupRows").innerHTML = "";
+    populateRoundNameSelect();
+    setFixtureMode("automatic");
+    addMatchupRow();
+  }
+}
+
+function setFixtureMode(mode) {
+  currentFixtureMode = mode;
+
+  const autoBtn = document.getElementById("fixtureModeAutoBtn");
+  const manualBtn = document.getElementById("fixtureModeManualBtn");
+  const autoInfo = document.getElementById("automaticFixtureInfo");
+  const manualSection = document.getElementById("manualFixtureSection");
+
+  if (mode === "automatic") {
+    autoBtn.style.background = "#2563eb";
+    autoBtn.style.color = "white";
+    manualBtn.style.background = "#e5e7eb";
+    manualBtn.style.color = "#333";
+    autoInfo.style.display = "block";
+    manualSection.style.display = "none";
+    generateAutomaticFixture();
+  } else {
+    manualBtn.style.background = "#2563eb";
+    manualBtn.style.color = "white";
+    autoBtn.style.background = "#e5e7eb";
+    autoBtn.style.color = "#333";
+    autoInfo.style.display = "none";
+    manualSection.style.display = "block";
+  }
+}
+
+function shuffleArray(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+function generateAutomaticFixture() {
+  const available = shuffleArray(getAvailableTeamsForKnockout());
+  autoFixturePairs = [];
+  autoFixtureByeTeam = null;
+
+  for (let i = 0; i < available.length - 1; i += 2) {
+    autoFixturePairs.push([available[i], available[i + 1]]);
+  }
+  if (available.length % 2 !== 0) {
+    autoFixtureByeTeam = available[available.length - 1];
+  }
+
+  const infoDiv = document.getElementById("automaticFixtureInfo");
+  let html = "<strong>Auto-generated fixture:</strong><br>";
+  autoFixturePairs.forEach(pair => {
+    html += `${escapeHtml(pair[0])} vs ${escapeHtml(pair[1])}<br>`;
+  });
+  if (autoFixtureByeTeam) {
+    html += `<em>${escapeHtml(autoFixtureByeTeam)} gets a bye and advances automatically</em>`;
+  }
+  infoDiv.innerHTML = html;
+}
+
+function addMatchupRow() {
+  const container = document.getElementById("matchupRows");
+  const teams = getAvailableTeamsForKnockout();
+
+  const options = teams.map(t => `<option value="${escapeHtml(t)}">${escapeHtml(t)}</option>`).join("");
+
+  const row = document.createElement("div");
+  row.style.cssText = "display:flex; gap:8px; align-items:center; margin-bottom:8px;";
+  row.innerHTML = `
+    <select class="matchup-team1" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ddd;" onchange="refreshMatchupOptions(this)">
+      <option value="">Select team</option>${options}
+    </select>
+    <span style="color:#999;">vs</span>
+    <select class="matchup-team2" style="flex:1; padding:8px; border-radius:6px; border:1px solid #ddd;" onchange="refreshMatchupOptions(this)">
+      <option value="">Select team</option>${options}
+    </select>
+    <button onclick="this.parentElement.remove()" style="width:auto; padding:8px 10px; background:#fee2e2; color:#b91c1c; font-size:13px;">✕</button>
+  `;
+  container.appendChild(row);
+}
+
+function refreshMatchupOptions(changedSelect) {
+  // Prevent selecting the same team on both sides of one matchup row
+  const row = changedSelect.parentElement;
+  const team1Select = row.querySelector(".matchup-team1");
+  const team2Select = row.querySelector(".matchup-team2");
+  const otherSelect = changedSelect === team1Select ? team2Select : team1Select;
+  const chosenValue = changedSelect.value;
+
+  Array.from(otherSelect.options).forEach(opt => {
+    opt.disabled = (opt.value !== "" && opt.value === chosenValue);
+  });
+}
+
+async function submitNewRound() {
+  const select = document.getElementById("roundNameSelect");
+  const customInput = document.getElementById("roundNameInput");
+  const roundName = select.value === "__custom__" ? customInput.value.trim() : select.value;
+
+  if (!roundName) {
+    alert("Please choose or enter a round name.");
+    return;
+  }
+
+  let matchups = [];
+
+  if (currentFixtureMode === "automatic") {
+    if (autoFixturePairs.length === 0) {
+      alert("Not enough teams available to generate a fixture.");
+      return;
+    }
+    matchups = autoFixturePairs;
+  } else {
+    const rows = document.querySelectorAll("#matchupRows > div");
+    for (const row of rows) {
+      const t1 = row.querySelector(".matchup-team1").value;
+      const t2 = row.querySelector(".matchup-team2").value;
+      if (!t1 || !t2) {
+        alert("Please select both teams for every matchup.");
+        return;
+      }
+      if (t1 === t2) {
+        alert("A team cannot play itself.");
+        return;
+      }
+      matchups.push([t1, t2]);
+    }
+    if (matchups.length === 0) {
+      alert("Please add at least one matchup.");
+      return;
+    }
+  }
+
+  try {
+    await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        round_name: roundName,
+        matchups: matchups
+      })
+    });
+
+    toggleAddRoundForm();
+    await refreshTournamentData();
+
+  } catch (error) {
+    alert("Could not save round. Please try again.");
+  }
+}
+
+async function deleteKnockoutRound(roundIndex) {
+  if (!confirm("Remove this round? This cannot be undone.")) return;
+  try {
+    await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round/${roundIndex}`, {
+      method: "DELETE"
+    });
+    await refreshTournamentData();
+  } catch (error) {
+    alert("Could not remove round.");
+  }
+}
+
+function renderKnockout() {
+  const container = document.getElementById("knockoutList");
+  const bannerDiv = document.getElementById("championBanner");
+  const addSection = document.getElementById("addRoundSection");
+  const knockout = tournamentData.knockout || [];
+  const isCricket = tournamentData.game_type === "cricket";
+
+  const result = getChampion();
+  if (result) {
+    bannerDiv.innerHTML = `
+      <div class="champion-banner">
+        <div class="champion-trophy">🏆</div>
+        <div class="champion-title">Tournament Champion</div>
+        <div class="champion-name">${escapeHtml(result.champion)}</div>
+        <div class="runner-up-box">
+          <div class="runner-up-medal">🥈</div>
+          <div class="runner-up-title">Runner-Up</div>
+          <div class="runner-up-name">${escapeHtml(result.runnerUp)}</div>
+        </div>
+      </div>
+    `;
+    addSection.style.display = "none";
+  } else {
+    bannerDiv.innerHTML = "";
+    addSection.style.display = "block";
+  }
+
+  if (knockout.length === 0) {
+    container.innerHTML = '<p style="color:#999; font-size:14px;">No knockout rounds yet. Add one below once your group stage is ready.</p>';
+    return;
+  }
+
+  let html = "";
+
+  knockout.forEach((round, roundIndex) => {
+    const totalInRound = round.matches.length;
+    const playedInRound = round.matches.filter(m => m.played).length;
+
+    html += `
+      <div style="margin-bottom:20px;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
+          <div style="font-weight:700; font-size:15px; color:#1a1a2e;">${escapeHtml(round.round_name)}</div>
+          <button onclick="deleteKnockoutRound(${roundIndex})" style="width:auto; padding:4px 10px; font-size:12px; background:#fee2e2; color:#b91c1c;">Remove Round</button>
+        </div>
+        <div style="font-size:12px; color:#888; margin-bottom:8px;">${playedInRound} of ${totalInRound} matches played</div>
+    `;
+
+    round.matches.forEach((match, matchIndex) => {
+      if (match.played) {
+        let scoreText = "";
+        if (match.team1_score !== null && match.team2_score !== null) {
+          if (isCricket) {
+            const w1 = match.team1_wickets ?? "-";
+            const w2 = match.team2_wickets ?? "-";
+            scoreText = `${match.team1_score}/${w1} - ${match.team2_score}/${w2}`;
+          } else {
+            scoreText = `${match.team1_score} - ${match.team2_score}`;
+          }
+        }
+        html += `
+          <div class="match-row">
+            <span class="match-teams">
+              ${match.winner === match.team1 ? '<strong>' : ''}${escapeHtml(match.team1)}${match.winner === match.team1 ? ' 🏆</strong>' : ''}
+              ${scoreText ? `<strong>${scoreText}</strong>` : 'vs'}
+              ${match.winner === match.team2 ? '<strong>' : ''}${escapeHtml(match.team2)}${match.winner === match.team2 ? ' 🏆</strong>' : ''}
+            </span>
+            <span class="played-badge">✓ ${escapeHtml(match.winner)} won</span>
+            ${renderMatchMetaBlock(`k_${roundIndex}_${matchIndex}`, match.match_time, match.location)}
+          </div>
+        `;
+      } else {
+        const scoreInputs = isCricket ? `
+          <input type="number" min="0" id="ko_r1s_${roundIndex}_${matchIndex}" placeholder="Runs" style="width:55px;">
+          <span>/</span>
+          <input type="number" min="0" max="10" id="ko_r1w_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:45px;">
+          <span>vs</span>
+          <input type="number" min="0" id="ko_r2s_${roundIndex}_${matchIndex}" placeholder="Runs" style="width:55px;">
+          <span>/</span>
+          <input type="number" min="0" max="10" id="ko_r2w_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:45px;">
+        ` : `
+          <input type="number" min="0" id="ko_r1s_${roundIndex}_${matchIndex}" placeholder="0" style="width:50px;">
+          <span>-</span>
+          <input type="number" min="0" id="ko_r2s_${roundIndex}_${matchIndex}" placeholder="0" style="width:50px;">
+        `;
+
+        html += `
+          <div class="match-row" style="flex-direction:column; align-items:stretch;">
+            <span class="match-teams">${escapeHtml(match.team1)} vs ${escapeHtml(match.team2)}</span>
+            <div class="score-inputs" style="margin-top:6px;">
+              ${scoreInputs}
+            </div>
+            <div style="display:flex; align-items:center; gap:8px; margin-top:8px;">
+              <label style="font-size:12px; color:#666;">Winner:</label>
+              <select id="ko_winner_${roundIndex}_${matchIndex}" style="flex:1; padding:6px; border-radius:6px; border:1px solid #ddd;">
+                <option value="">Select winner</option>
+                <option value="${escapeHtml(match.team1)}">${escapeHtml(match.team1)}</option>
+                <option value="${escapeHtml(match.team2)}">${escapeHtml(match.team2)}</option>
+              </select>
+              <button onclick="submitKnockoutResult(${roundIndex}, ${matchIndex})">Save</button>
+            </div>
+            ${renderMatchMetaBlock(`k_${roundIndex}_${matchIndex}`, match.match_time, match.location)}
+          </div>
+        `;
+      }
+    });
+
+    html += `</div>`;
+  });
+
+  container.innerHTML = html;
+}
+
+async function submitKnockoutResult(roundIndex, matchIndex) {
+  const winner = document.getElementById(`ko_winner_${roundIndex}_${matchIndex}`).value;
+  if (!winner) {
+    alert("Please select the winner.");
+    return;
+  }
+
+  const s1El = document.getElementById(`ko_r1s_${roundIndex}_${matchIndex}`);
+  const s2El = document.getElementById(`ko_r2s_${roundIndex}_${matchIndex}`);
+  const w1El = document.getElementById(`ko_r1w_${roundIndex}_${matchIndex}`);
+  const w2El = document.getElementById(`ko_r2w_${roundIndex}_${matchIndex}`);
+
+  const team1_score = s1El && s1El.value !== "" ? parseInt(s1El.value) : null;
+  const team2_score = s2El && s2El.value !== "" ? parseInt(s2El.value) : null;
+  const team1_wickets = w1El && w1El.value !== "" ? parseInt(w1El.value) : null;
+  const team2_wickets = w2El && w2El.value !== "" ? parseInt(w2El.value) : null;
+
+  try {
+    await fetch(`${API_BASE}/knockout-result`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        tournament_id: tournamentId,
+        round_index: roundIndex,
+        match_index: matchIndex,
+        winner: winner,
+        team1_score: team1_score,
+        team2_score: team2_score,
+        team1_wickets: team1_wickets,
+        team2_wickets: team2_wickets
+      })
+    });
+
+    await refreshTournamentData();
+
+  } catch (error) {
+    alert("Could not save result.");
+  }
+}
+
+async function refreshTournamentData() {
+  const response = await fetch(`${API_BASE}/tournament/${tournamentId}`);
+  tournamentData = await response.json();
+  const isKnockoutOnly = tournamentData.tournament_format === "knockout";
+  if (!isKnockoutOnly) {
+    await renderStandings();
+    renderSchedule();
+  }
+  renderKnockout();
 }
 
 function escapeHtml(text) {

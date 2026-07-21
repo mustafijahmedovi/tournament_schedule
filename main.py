@@ -35,6 +35,8 @@ def init_db():
             points_draw INTEGER NOT NULL DEFAULT 1,
             points_loss INTEGER NOT NULL DEFAULT 0,
             game_type TEXT NOT NULL DEFAULT 'football',
+            knockout_json TEXT NOT NULL DEFAULT '[]',
+            tournament_format TEXT NOT NULL DEFAULT 'league',
             created_at TEXT NOT NULL
         )
     """)
@@ -50,6 +52,7 @@ class CreateTournamentInput(BaseModel):
     teams: List[str]
     num_groups: int = 1
     game_type: str = "football"
+    tournament_format: str = "league"  # "league" (group stage + optional knockout) or "knockout" (direct single elimination)
     points_win: int = 3
     points_draw: int = 1
     points_loss: int = 0
@@ -67,6 +70,40 @@ class MatchResultInput(BaseModel):
     team2_wickets: Optional[int] = None
 
 
+class AddKnockoutRoundInput(BaseModel):
+    tournament_id: str
+    round_name: str
+    matchups: List[List[str]]  # e.g. [["Team A", "Team B"], ["Team C", "Team D"]]
+
+
+class KnockoutResultInput(BaseModel):
+    tournament_id: str
+    round_index: int
+    match_index: int
+    winner: str
+    team1_score: Optional[int] = None
+    team2_score: Optional[int] = None
+    team1_wickets: Optional[int] = None
+    team2_wickets: Optional[int] = None
+
+
+class MatchScheduleInput(BaseModel):
+    tournament_id: str
+    group_index: int
+    round_index: int
+    match_index: int
+    match_time: Optional[str] = None
+    location: Optional[str] = None
+
+
+class KnockoutScheduleInput(BaseModel):
+    tournament_id: str
+    round_index: int
+    match_index: int
+    match_time: Optional[str] = None
+    location: Optional[str] = None
+
+
 # ---------- Routes ----------
 @app.get("/")
 def read_root():
@@ -77,31 +114,45 @@ def read_root():
 def create_tournament(input: CreateTournamentInput):
     if len(input.teams) < 2:
         raise HTTPException(status_code=400, detail="Need at least 2 teams")
-    if input.num_groups < 1:
-        raise HTTPException(status_code=400, detail="Need at least 1 group")
-    if input.num_groups > len(input.teams):
-        raise HTTPException(status_code=400, detail="Cannot have more groups than teams")
 
-    # Split teams into groups
-    groups = split_into_groups(input.teams, input.num_groups)
+    is_knockout_only = input.tournament_format == "knockout"
 
-    # Generate a round-robin schedule for each group
-    schedule_per_group = []
-    for group in groups:
-        group_schedule = generate_round_robin(group)
-        schedule_per_group.append(group_schedule)
+    if is_knockout_only:
+        # Direct knockout: no group stage, all teams in one bucket for reference,
+        # no round-robin schedule generated
+        groups = [input.teams]
+        schedule_per_group = [[]]
+        results = [[]]
+    else:
+        if input.num_groups < 1:
+            raise HTTPException(status_code=400, detail="Need at least 1 group")
+        if input.num_groups > len(input.teams):
+            raise HTTPException(status_code=400, detail="Cannot have more groups than teams")
 
-    # Set up an empty results structure matching the schedule shape
-    # results[group_index][round_index][match_index] = {"team1_score": None, "team2_score": None, "played": False}
-    results = []
-    for group_schedule in schedule_per_group:
-        group_results = []
-        for round_matches in group_schedule:
-            round_results = []
-            for match in round_matches:
-                round_results.append({"team1_score": None, "team2_score": None, "played": False})
-            group_results.append(round_results)
-        results.append(group_results)
+        # Split teams into groups
+        groups = split_into_groups(input.teams, input.num_groups)
+
+        # Generate a round-robin schedule for each group
+        schedule_per_group = []
+        for group in groups:
+            group_schedule = generate_round_robin(group)
+            schedule_per_group.append(group_schedule)
+
+        # Set up an empty results structure matching the schedule shape
+        results = []
+        for group_schedule in schedule_per_group:
+            group_results = []
+            for round_matches in group_schedule:
+                round_results = []
+                for match in round_matches:
+                    round_results.append({
+                        "team1_score": None, "team2_score": None,
+                        "team1_wickets": None, "team2_wickets": None,
+                        "played": False,
+                        "match_time": None, "location": None
+                    })
+                group_results.append(round_results)
+            results.append(group_results)
 
     tournament_id = str(uuid.uuid4())[:8]  # short shareable ID
     created_at = datetime.now().isoformat()
@@ -109,7 +160,7 @@ def create_tournament(input: CreateTournamentInput):
     conn = sqlite3.connect("tournaments.db")
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO tournaments (id, name, groups_json, schedule_json, results_json, points_win, points_draw, points_loss, game_type, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tournaments (id, name, groups_json, schedule_json, results_json, points_win, points_draw, points_loss, game_type, knockout_json, tournament_format, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             tournament_id,
             input.name,
@@ -120,6 +171,8 @@ def create_tournament(input: CreateTournamentInput):
             input.points_draw,
             input.points_loss,
             input.game_type,
+            json.dumps([]),
+            input.tournament_format,
             created_at
         )
     )
@@ -151,6 +204,8 @@ def get_tournament(tournament_id: str):
         "points_draw": row["points_draw"],
         "points_loss": row["points_loss"],
         "game_type": row["game_type"],
+        "knockout": json.loads(row["knockout_json"]),
+        "tournament_format": row["tournament_format"],
         "created_at": row["created_at"]
     }
 
@@ -170,13 +225,12 @@ def submit_match_result(input: MatchResultInput):
     results = json.loads(row["results_json"])
 
     try:
-        results[input.group_index][input.round_index][input.match_index] = {
-            "team1_score": input.team1_score,
-            "team2_score": input.team2_score,
-            "team1_wickets": input.team1_wickets,
-            "team2_wickets": input.team2_wickets,
-            "played": True
-        }
+        match = results[input.group_index][input.round_index][input.match_index]
+        match["team1_score"] = input.team1_score
+        match["team2_score"] = input.team2_score
+        match["team1_wickets"] = input.team1_wickets
+        match["team2_wickets"] = input.team2_wickets
+        match["played"] = True
     except IndexError:
         conn.close()
         raise HTTPException(status_code=400, detail="Invalid group/round/match index")
@@ -277,3 +331,189 @@ def get_standings(tournament_id: str):
         all_standings.append(table)
 
     return {"standings": all_standings}
+
+
+@app.post("/tournament/{tournament_id}/knockout/round")
+def add_knockout_round(tournament_id: str, input: AddKnockoutRoundInput):
+    conn = sqlite3.connect("tournaments.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tournaments WHERE id = ?", (tournament_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    if len(input.matchups) < 1:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Need at least 1 matchup")
+
+    knockout = json.loads(row["knockout_json"])
+
+    new_round = {
+        "round_name": input.round_name,
+        "matches": [
+            {
+                "team1": pair[0],
+                "team2": pair[1],
+                "team1_score": None,
+                "team2_score": None,
+                "team1_wickets": None,
+                "team2_wickets": None,
+                "winner": None,
+                "played": False,
+                "match_time": None,
+                "location": None
+            }
+            for pair in input.matchups
+        ]
+    }
+
+    knockout.append(new_round)
+
+    cursor.execute(
+        "UPDATE tournaments SET knockout_json = ? WHERE id = ?",
+        (json.dumps(knockout), tournament_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Knockout round added"}
+
+
+@app.post("/knockout-result")
+def submit_knockout_result(input: KnockoutResultInput):
+    conn = sqlite3.connect("tournaments.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tournaments WHERE id = ?", (input.tournament_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    knockout = json.loads(row["knockout_json"])
+
+    try:
+        match = knockout[input.round_index]["matches"][input.match_index]
+    except IndexError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid round/match index")
+
+    if input.winner not in [match["team1"], match["team2"]]:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Winner must be one of the two teams in this match")
+
+    match["team1_score"] = input.team1_score
+    match["team2_score"] = input.team2_score
+    match["team1_wickets"] = input.team1_wickets
+    match["team2_wickets"] = input.team2_wickets
+    match["winner"] = input.winner
+    match["played"] = True
+
+    cursor.execute(
+        "UPDATE tournaments SET knockout_json = ? WHERE id = ?",
+        (json.dumps(knockout), input.tournament_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Knockout result saved"}
+
+
+@app.delete("/tournament/{tournament_id}/knockout/round/{round_index}")
+def delete_knockout_round(tournament_id: str, round_index: int):
+    conn = sqlite3.connect("tournaments.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tournaments WHERE id = ?", (tournament_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    knockout = json.loads(row["knockout_json"])
+
+    try:
+        knockout.pop(round_index)
+    except IndexError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid round index")
+
+    cursor.execute(
+        "UPDATE tournaments SET knockout_json = ? WHERE id = ?",
+        (json.dumps(knockout), tournament_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Knockout round removed"}
+
+
+@app.post("/match-schedule")
+def set_match_schedule(input: MatchScheduleInput):
+    conn = sqlite3.connect("tournaments.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tournaments WHERE id = ?", (input.tournament_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    results = json.loads(row["results_json"])
+
+    try:
+        match = results[input.group_index][input.round_index][input.match_index]
+    except IndexError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid group/round/match index")
+
+    match["match_time"] = input.match_time
+    match["location"] = input.location
+
+    cursor.execute(
+        "UPDATE tournaments SET results_json = ? WHERE id = ?",
+        (json.dumps(results), input.tournament_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Match schedule saved"}
+
+
+@app.post("/knockout-schedule")
+def set_knockout_schedule(input: KnockoutScheduleInput):
+    conn = sqlite3.connect("tournaments.db")
+    conn.row_factory = sqlite3.Row
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM tournaments WHERE id = ?", (input.tournament_id,))
+    row = cursor.fetchone()
+
+    if row is None:
+        conn.close()
+        raise HTTPException(status_code=404, detail="Tournament not found")
+
+    knockout = json.loads(row["knockout_json"])
+
+    try:
+        match = knockout[input.round_index]["matches"][input.match_index]
+    except IndexError:
+        conn.close()
+        raise HTTPException(status_code=400, detail="Invalid round/match index")
+
+    match["match_time"] = input.match_time
+    match["location"] = input.location
+
+    cursor.execute(
+        "UPDATE tournaments SET knockout_json = ? WHERE id = ?",
+        (json.dumps(knockout), input.tournament_id)
+    )
+    conn.commit()
+    conn.close()
+
+    return {"message": "Knockout match schedule saved"}
