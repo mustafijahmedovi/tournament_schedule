@@ -8,6 +8,23 @@
 </head>
 <body>
 
+<div id="customAlertOverlay" class="custom-alert-overlay">
+  <div class="custom-alert-box">
+    <p id="customAlertMessage" class="custom-alert-text"></p>
+    <button onclick="hideCustomAlert()" class="custom-alert-btn">OK</button>
+  </div>
+</div>
+
+<div id="customConfirmOverlay" class="custom-alert-overlay">
+  <div class="custom-alert-box">
+    <p id="customConfirmMessage" class="custom-alert-text"></p>
+    <div style="display:flex; gap:10px;">
+      <button onclick="handleCustomConfirm(false)" class="custom-alert-btn" style="background:#22222E;">Cancel</button>
+      <button onclick="handleCustomConfirm(true)" class="custom-alert-btn">Confirm</button>
+    </div>
+  </div>
+</div>
+
 <div id="loadingBox" class="loading">Loading tournament...</div>
 <div id="errorBox" class="error-box" style="display:none;"></div>
 
@@ -33,10 +50,8 @@
 
   <div class="card">
     <h2>Knockout Stage</h2>
-    <div id="championBanner"></div>
-    <div id="knockoutList"></div>
 
-    <div id="addRoundSection" style="margin-top:20px; padding-top:16px; border-top:1px solid #26263A;">
+    <div id="addRoundSection" style="margin-bottom:20px; padding-bottom:16px; border-bottom:1px solid #26263A;">
       <button onclick="toggleAddRoundForm()" style="width:auto; padding:8px 16px; font-size:14px; background:#A238FF;">+ Add Knockout Round</button>
 
       <div id="addRoundForm" style="display:none; margin-top:16px;">
@@ -64,6 +79,9 @@
         </div>
       </div>
     </div>
+
+    <div id="championBanner"></div>
+    <div id="knockoutList"></div>
   </div>
 </div>
 
@@ -75,7 +93,32 @@
 </footer>
 
 <script>
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://tournament-schedule.onrender.com";
+
+function showCustomAlert(message) {
+  document.getElementById("customAlertMessage").innerText = message;
+  document.getElementById("customAlertOverlay").classList.add("show");
+}
+
+function hideCustomAlert() {
+  document.getElementById("customAlertOverlay").classList.remove("show");
+}
+
+let pendingConfirmCallback = null;
+
+function showCustomConfirm(message, onConfirm) {
+  document.getElementById("customConfirmMessage").innerText = message;
+  document.getElementById("customConfirmOverlay").classList.add("show");
+  pendingConfirmCallback = onConfirm;
+}
+
+function handleCustomConfirm(confirmed) {
+  document.getElementById("customConfirmOverlay").classList.remove("show");
+  if (confirmed && pendingConfirmCallback) {
+    pendingConfirmCallback();
+  }
+  pendingConfirmCallback = null;
+}
 const urlParams = new URLSearchParams(window.location.search);
 const tournamentId = urlParams.get("id");
 
@@ -238,7 +281,7 @@ async function saveMetaEdit(keyPrefix) {
     }
     await refreshTournamentData();
   } catch (error) {
-    alert("Could not save match details.");
+    showCustomAlert("Could not save match details.");
   }
 }
 
@@ -344,7 +387,7 @@ async function submitCricketResult(roundIndex, matchIndex) {
   const wkts2 = parseInt(document.getElementById(`wkts2_${roundIndex}_${matchIndex}`).value);
 
   if (isNaN(runs1) || isNaN(runs2)) {
-    alert("Please enter runs for both teams.");
+    showCustomAlert("Please enter runs for both teams.");
     return;
   }
 
@@ -371,7 +414,7 @@ async function submitCricketResult(roundIndex, matchIndex) {
     renderSchedule();
 
   } catch (error) {
-    alert("Could not save result. Please try again.");
+    showCustomAlert("Could not save result. Please try again.");
   }
 }
 
@@ -383,7 +426,7 @@ async function submitResult(roundIndex, matchIndex) {
   const score2 = parseInt(score2El.value);
 
   if (isNaN(score1) || isNaN(score2) || score1 < 0 || score2 < 0) {
-    alert("Please enter valid scores for both teams.");
+    showCustomAlert("Please enter valid scores for both teams.");
     return;
   }
 
@@ -409,7 +452,7 @@ async function submitResult(roundIndex, matchIndex) {
     renderSchedule();
 
   } catch (error) {
-    alert("Could not save result. Please try again.");
+    showCustomAlert("Could not save result. Please try again.");
   }
 }
 
@@ -607,7 +650,7 @@ async function submitNewRound() {
   const roundName = select.value === "__custom__" ? customInput.value.trim() : select.value;
 
   if (!roundName) {
-    alert("Please choose or enter a round name.");
+    showCustomAlert("Please choose or enter a round name.");
     return;
   }
 
@@ -615,7 +658,7 @@ async function submitNewRound() {
 
   if (currentFixtureMode === "automatic") {
     if (autoFixturePairs.length === 0) {
-      alert("Not enough teams available to generate a fixture.");
+      showCustomAlert("Not enough teams available to generate a fixture.");
       return;
     }
     matchups = autoFixturePairs;
@@ -625,17 +668,17 @@ async function submitNewRound() {
       const t1 = row.querySelector(".matchup-team1").value;
       const t2 = row.querySelector(".matchup-team2").value;
       if (!t1 || !t2) {
-        alert("Please select both teams for every matchup.");
+        showCustomAlert("Please select both teams for every matchup.");
         return;
       }
       if (t1 === t2) {
-        alert("A team cannot play itself.");
+        showCustomAlert("A team cannot play itself.");
         return;
       }
       matchups.push([t1, t2]);
     }
     if (matchups.length === 0) {
-      alert("Please add at least one matchup.");
+      showCustomAlert("Please add at least one matchup.");
       return;
     }
   }
@@ -655,20 +698,21 @@ async function submitNewRound() {
     await refreshTournamentData();
 
   } catch (error) {
-    alert("Could not save round. Please try again.");
+    showCustomAlert("Could not save round. Please try again.");
   }
 }
 
 async function deleteKnockoutRound(roundIndex) {
-  if (!confirm("Remove this round? This cannot be undone.")) return;
-  try {
-    await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round/${roundIndex}`, {
-      method: "DELETE"
-    });
-    await refreshTournamentData();
-  } catch (error) {
-    alert("Could not remove round.");
-  }
+  showCustomConfirm("Remove this round? This cannot be undone.", async () => {
+    try {
+      await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round/${roundIndex}`, {
+        method: "DELETE"
+      });
+      await refreshTournamentData();
+    } catch (error) {
+      showCustomAlert("Could not remove round.");
+    }
+  });
 }
 
 function renderKnockout() {
@@ -786,7 +830,7 @@ function renderKnockout() {
 async function submitKnockoutResult(roundIndex, matchIndex) {
   const winner = document.getElementById(`ko_winner_${roundIndex}_${matchIndex}`).value;
   if (!winner) {
-    alert("Please select the winner.");
+    showCustomAlert("Please select the winner.");
     return;
   }
 
@@ -819,7 +863,7 @@ async function submitKnockoutResult(roundIndex, matchIndex) {
     await refreshTournamentData();
 
   } catch (error) {
-    alert("Could not save result.");
+    showCustomAlert("Could not save result.");
   }
 }
 

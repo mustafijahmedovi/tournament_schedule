@@ -17,10 +17,10 @@
 <div class="card">
   <label for="tournamentFormat">Tournament Format</label>
   <select id="tournamentFormat" onchange="toggleFormatFields()">
-    <option value="league">🏁 Group Stage (Round Robin)</option>
-    <option value="knockout">⚔️ Direct Knockout (Single Elimination)</option>
+    <option value="league">🏁 Group Stage</option>
+    <option value="knockout">⚔️ Direct Knockout</option>
   </select>
-  <div class="hint">Direct Knockout: no groups, no round robin — lose once and you're out. You'll build the bracket manually on the next page.</div>
+  <div class="hint">Direct Knockout: no groups, lose once and you're out. You'll build the bracket manually on the next page.</div>
 
   <label for="gameType">Game Type</label>
   <select id="gameType" onchange="applyGamePreset()">
@@ -78,7 +78,7 @@
 </div>
 
 <script>
-const API_BASE = "http://127.0.0.1:8000";
+const API_BASE = "https://tournament-schedule.onrender.com";
 
 function updateLineNumbers() {
   const textarea = document.getElementById("teamsInput");
