@@ -10,29 +10,58 @@
 
 <div class="brand-header">
   <img src="devntric-icon-circle.png" alt="Devntric">
-  <h1>Devntric</h1>
   <h1>Tournament Scheduler</h1>
-  <p>Create a tournament with groups</p>
+  <p>Create a round-robin tournament with groups</p>
 </div>
 
 <div class="card">
   <label for="tournamentFormat">Tournament Format</label>
-  <select id="tournamentFormat" onchange="toggleFormatFields()">
-    <option value="league">🏁 Group Stage</option>
-    <option value="knockout">⚔️ Direct Knockout</option>
-  </select>
-  <div class="hint">Direct Knockout: no groups, lose once and you're out. You'll build the bracket manually on the next page.</div>
+  <div class="custom-select" id="tournamentFormatSelect">
+    <button type="button" class="custom-select-trigger" onclick="toggleDropdown('tournamentFormatSelect')">
+      <span class="option-icon">🏁</span> <span class="option-label" style="color:#3B82F6; font-weight:700;">Group Stage (Round Robin)</span>
+      <span class="chevron">▾</span>
+    </button>
+    <div class="custom-select-options">
+      <div class="custom-select-option selected accent-blue" onclick="selectCustomOption('tournamentFormatSelect', 'league', '🏁', 'Group Stage (Round Robin)', toggleFormatFields)">
+        <span class="option-icon">🏁</span> Group Stage (Round Robin)
+      </div>
+      <div class="custom-select-option accent-red" onclick="selectCustomOption('tournamentFormatSelect', 'knockout', '⚔️', 'Direct Knockout (Single Elimination)', toggleFormatFields)">
+        <span class="option-icon">⚔️</span> Direct Knockout (Single Elimination)
+      </div>
+    </div>
+  </div>
+  <div class="hint">Direct Knockout: no groups, no round robin — lose once and you're out. You'll build the bracket manually on the next page.</div>
 
   <label for="gameType">Game Type</label>
-  <select id="gameType" onchange="applyGamePreset()">
-    <option value="football">⚽ Football</option>
-    <option value="cricket">🏏 Cricket</option>
-    <option value="hockey">🏑 Hockey</option>
-    <option value="badminton">🏸 Badminton</option>
-    <option value="tennis">🎾 Tennis</option>
-    <option value="chess">♟️ Chess</option>
-    <option value="other">🎮 Other</option>
-  </select>
+  <div class="custom-select" id="gameTypeSelect">
+    <button type="button" class="custom-select-trigger" onclick="toggleDropdown('gameTypeSelect')">
+      <span class="option-icon">⚽</span> <span class="option-label" style="color:#22C55E; font-weight:700;">Football</span>
+      <span class="chevron">▾</span>
+    </button>
+    <div class="custom-select-options">
+      <div class="custom-select-option selected accent-green" onclick="selectCustomOption('gameTypeSelect', 'football', '⚽', 'Football', applyGamePreset)">
+        <span class="option-icon">⚽</span> Football
+      </div>
+      <div class="custom-select-option accent-orange" onclick="selectCustomOption('gameTypeSelect', 'cricket', '🏏', 'Cricket', applyGamePreset)">
+        <span class="option-icon">🏏</span> Cricket
+      </div>
+      <div class="custom-select-option accent-blue" onclick="selectCustomOption('gameTypeSelect', 'hockey', '🏑', 'Hockey', applyGamePreset)">
+        <span class="option-icon">🏑</span> Hockey
+      </div>
+      <div class="custom-select-option accent-pink" onclick="selectCustomOption('gameTypeSelect', 'badminton', '🏸', 'Badminton', applyGamePreset)">
+        <span class="option-icon">🏸</span> Badminton
+      </div>
+      <div class="custom-select-option accent-yellow" onclick="selectCustomOption('gameTypeSelect', 'tennis', '🎾', 'Tennis', applyGamePreset)">
+        <span class="option-icon">🎾</span> Tennis
+      </div>
+      <div class="custom-select-option accent-purple" onclick="selectCustomOption('gameTypeSelect', 'chess', '♟️', 'Chess', applyGamePreset)">
+        <span class="option-icon">♟️</span> Chess
+      </div>
+      <div class="custom-select-option accent-gray" onclick="selectCustomOption('gameTypeSelect', 'other', '🎮', 'Other', applyGamePreset)">
+        <span class="option-icon">🎮</span> Other
+      </div>
+    </div>
+  </div>
   <div class="hint">Cricket uses runs/wickets scoring. Others use standard score-vs-score.</div>
 
   <label for="tournamentName">Tournament Name</label>
@@ -65,7 +94,7 @@
       <input type="number" id="pointsLoss" value="0" min="0">
     </div>
     </div>
-    <div class="hint">Default is football-style (3-1-0). For sports with no draws (badminton, tennis), just set Draw's value it won't be used.</div>
+    <div class="hint">Default is football-style (3-1-0). For sports with no draws (badminton, tennis), just set Draw's value — it won't be used.</div>
   </div>
 
   <div id="error"></div>
@@ -110,8 +139,46 @@ const GAME_PRESETS = {
   other:     { win: 3, draw: 1, loss: 0 }
 };
 
+function toggleDropdown(selectId) {
+  const el = document.getElementById(selectId);
+  // Close any other open dropdowns first
+  document.querySelectorAll(".custom-select.open").forEach(other => {
+    if (other.id !== selectId) other.classList.remove("open");
+  });
+  el.classList.toggle("open");
+}
+
+const ACCENT_COLORS = {
+  football: '#22C55E', cricket: '#FF8A3D', hockey: '#3B82F6', badminton: '#FF3B6B',
+  tennis: '#EAB308', chess: '#A238FF', other: '#8888A0',
+  league: '#3B82F6', knockout: '#EF4444'
+};
+
+function selectCustomOption(selectId, value, icon, label, onSelectCallback) {
+  const el = document.getElementById(selectId);
+  el.dataset.value = value;
+  const labelEl = el.querySelector(".option-label");
+  el.querySelector(".custom-select-trigger .option-icon").textContent = icon;
+  labelEl.textContent = label;
+  labelEl.style.color = ACCENT_COLORS[value] || "var(--text)";
+  labelEl.style.fontWeight = "700";
+
+  el.querySelectorAll(".custom-select-option").forEach(opt => opt.classList.remove("selected"));
+  event.currentTarget.classList.add("selected");
+
+  el.classList.remove("open");
+  if (onSelectCallback) onSelectCallback();
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener("click", (e) => {
+  if (!e.target.closest(".custom-select")) {
+    document.querySelectorAll(".custom-select.open").forEach(el => el.classList.remove("open"));
+  }
+});
+
 function applyGamePreset() {
-  const gameType = document.getElementById("gameType").value;
+  const gameType = document.getElementById("gameTypeSelect").dataset.value;
   const preset = GAME_PRESETS[gameType];
   document.getElementById("pointsWin").value = preset.win;
   document.getElementById("pointsDraw").value = preset.draw;
@@ -119,14 +186,14 @@ function applyGamePreset() {
 }
 
 function toggleFormatFields() {
-  const format = document.getElementById("tournamentFormat").value;
+  const format = document.getElementById("tournamentFormatSelect").dataset.value;
   const leagueFields = document.getElementById("leagueOnlyFields");
   leagueFields.style.display = format === "knockout" ? "none" : "block";
 }
 
 async function createTournament() {
-  const tournamentFormat = document.getElementById("tournamentFormat").value;
-  const gameType = document.getElementById("gameType").value;
+  const tournamentFormat = document.getElementById("tournamentFormatSelect").dataset.value;
+  const gameType = document.getElementById("gameTypeSelect").dataset.value;
   const name = document.getElementById("tournamentName").value.trim();
   const teamsRaw = document.getElementById("teamsInput").value.trim();
   const numGroups = tournamentFormat === "knockout" ? 1 : parseInt(document.getElementById("numGroups").value);

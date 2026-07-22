@@ -201,3 +201,69 @@ button:disabled { background: #33333F; cursor: not-allowed; filter: none; }
   text-decoration: none;
 }
 a.footer-highlight:hover { text-decoration: underline; }
+
+.custom-select {
+  position: relative;
+}
+.custom-select-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 11px 14px;
+  font-size: 15px;
+  border-radius: 8px;
+  border: 1px solid var(--card-border);
+  background: #0F0F17;
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  cursor: pointer;
+  text-align: left;
+  margin-top: 0;
+}
+.custom-select-trigger:hover { border-color: var(--grad-mid); }
+.custom-select-trigger .option-label { flex: 1; }
+.custom-select-trigger .chevron { color: var(--text-dim); transition: transform 0.15s; }
+.custom-select.open .custom-select-trigger .chevron { transform: rotate(180deg); }
+
+.custom-select-options {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  background: #15151F;
+  border: 1px solid var(--card-border);
+  border-radius: 10px;
+  overflow: hidden;
+  z-index: 50;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.custom-select.open .custom-select-options { display: block; }
+
+.custom-select-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  color: var(--text);
+  cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: background 0.1s;
+}
+.custom-select-option:hover { background: #1C1C28; }
+.custom-select-option.selected {
+  background: #1C1C28;
+  font-weight: 600;
+}
+.custom-select-option .option-icon { font-size: 17px; }
+
+.custom-select-option.accent-green.selected, .custom-select-option.accent-green:hover { border-left-color: #22C55E; }
+.custom-select-option.accent-orange.selected, .custom-select-option.accent-orange:hover { border-left-color: #FF8A3D; }
+.custom-select-option.accent-blue.selected, .custom-select-option.accent-blue:hover { border-left-color: #3B82F6; }
+.custom-select-option.accent-pink.selected, .custom-select-option.accent-pink:hover { border-left-color: #FF3B6B; }
+.custom-select-option.accent-yellow.selected, .custom-select-option.accent-yellow:hover { border-left-color: #EAB308; }
+.custom-select-option.accent-purple.selected, .custom-select-option.accent-purple:hover { border-left-color: #A238FF; }
+.custom-select-option.accent-gray.selected, .custom-select-option.accent-gray:hover { border-left-color: #8888A0; }
+.custom-select-option.accent-red.selected, .custom-select-option.accent-red:hover { border-left-color: #EF4444; }
