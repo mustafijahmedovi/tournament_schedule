@@ -79,9 +79,14 @@
   </div>
 
   <div class="card" id="firstRoundCard">
-    <h2>First Round</h2>
-    <div id="matchesSummary" style="font-size:13px; color:#9494A8; margin-bottom:12px;"></div>
-    <div id="scheduleList"></div>
+    <h2 onclick="toggleFirstRoundContent()" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">
+      First Round
+      <span id="firstRoundChevron" style="font-size:14px; transition:transform 0.15s;">▶</span>
+    </h2>
+    <div id="firstRoundContent" style="display:none;">
+      <div id="matchesSummary" style="font-size:13px; color:#9494A8; margin-bottom:12px;"></div>
+      <div id="scheduleList"></div>
+    </div>
   </div>
 </div>
 
@@ -94,6 +99,14 @@
 
 <script>
 const API_BASE = "https://tournament-schedule.onrender.com";
+
+function toggleFirstRoundContent() {
+  const content = document.getElementById("firstRoundContent");
+  const chevron = document.getElementById("firstRoundChevron");
+  const isHidden = content.style.display === "none";
+  content.style.display = isHidden ? "block" : "none";
+  chevron.style.transform = isHidden ? "rotate(90deg)" : "rotate(0deg)";
+}
 
 function showCustomAlert(message) {
   document.getElementById("customAlertMessage").innerText = message;
