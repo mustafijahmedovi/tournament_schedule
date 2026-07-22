@@ -134,6 +134,8 @@ function handleCustomConfirm(confirmed) {
 }
 const urlParams = new URLSearchParams(window.location.search);
 const tournamentId = urlParams.get("id");
+const adminToken = urlParams.get("admin") || "";
+const isEditMode = adminToken.length > 0;
 
 let tournamentData = null;
 let currentGroup = 0;
@@ -152,6 +154,14 @@ async function loadTournament() {
     document.getElementById("tournamentName").innerText = "🏆 " + tournamentData.name;
     document.getElementById("loadingBox").style.display = "none";
     document.getElementById("content").style.display = "block";
+
+    document.getElementById("addRoundSection").style.display = isEditMode ? "block" : "none";
+    if (!isEditMode) {
+      const badge = document.createElement("div");
+      badge.style.cssText = "text-align:center; background:#1A1626; color:#A238FF; font-size:12px; font-weight:700; padding:8px; border-radius:8px; margin-bottom:16px;";
+      badge.innerText = "👁 VIEW ONLY — you don't have edit access to this tournament";
+      document.getElementById("content").insertBefore(badge, document.getElementById("groupTabs"));
+    }
 
     const isKnockoutOnly = tournamentData.tournament_format === "knockout";
     document.getElementById("standingsCard").style.display = isKnockoutOnly ? "none" : "block";
@@ -240,13 +250,14 @@ function renderMatchMetaBlock(keyPrefix, matchTime, location) {
   return `
     <div class="match-meta" id="metaDisplay_${keyPrefix}">
       <span style="font-size:12px; color:#9494A8;">${displayText}</span>
-      <button onclick="toggleMetaEdit('${keyPrefix}')" style="width:auto; padding:2px 8px; font-size:11px; background:#22222E; color:#F1F1F6; margin-top:0;">${hasInfo ? "Edit" : "+ Add time/location"}</button>
+      ${isEditMode ? `<button onclick="toggleMetaEdit('${keyPrefix}')" style="width:auto; padding:2px 8px; font-size:11px; background:#22222E; color:#F1F1F6; margin-top:0;">${hasInfo ? "Edit" : "+ Add time/location"}</button>` : ''}
     </div>
+    ${isEditMode ? `
     <div class="match-meta-edit" id="metaEdit_${keyPrefix}" style="display:none;">
       <input type="datetime-local" id="metaTime_${keyPrefix}" value="${matchTime ? matchTime : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #26263A;">
       <input type="text" id="metaLocation_${keyPrefix}" placeholder="Location (e.g. City Stadium)" value="${location ? escapeHtml(location) : ''}" style="padding:5px; font-size:12px; border-radius:6px; border:1px solid #26263A; flex:1; min-width:120px;">
       <button onclick="saveMetaEdit('${keyPrefix}')" style="width:auto; padding:5px 10px; font-size:11px;">Save</button>
-    </div>
+    </div>` : ''}
   `;
 }
 
@@ -271,6 +282,7 @@ async function saveMetaEdit(keyPrefix) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tournament_id: tournamentId,
+        admin_token: adminToken,
           group_index: parseInt(parts[1]),
           round_index: parseInt(parts[2]),
           match_index: parseInt(parts[3]),
@@ -285,6 +297,7 @@ async function saveMetaEdit(keyPrefix) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           tournament_id: tournamentId,
+        admin_token: adminToken,
           round_index: parseInt(parts[1]),
           match_index: parseInt(parts[2]),
           match_time: matchTime,
@@ -358,6 +371,7 @@ function renderSchedule() {
         html += `
           <div class="match-row">
             <span class="match-teams">${escapeHtml(team1)} vs ${escapeHtml(team2)}</span>
+            ${isEditMode ? `
             <div class="score-inputs">
               <input type="number" min="0" id="runs1_${roundIndex}_${matchIndex}" placeholder="Runs" style="width:60px;">
               <span>/</span>
@@ -367,7 +381,7 @@ function renderSchedule() {
               <span>/</span>
               <input type="number" min="0" max="10" id="wkts2_${roundIndex}_${matchIndex}" placeholder="Wkts" style="width:50px;">
               <button onclick="submitCricketResult(${roundIndex}, ${matchIndex})">Save</button>
-            </div>
+            </div>` : ''}
             ${renderMatchMetaBlock(`g_${currentGroup}_${roundIndex}_${matchIndex}`, result.match_time, result.location)}
           </div>
         `;
@@ -375,12 +389,13 @@ function renderSchedule() {
         html += `
           <div class="match-row">
             <span class="match-teams">${escapeHtml(team1)} vs ${escapeHtml(team2)}</span>
+            ${isEditMode ? `
             <div class="score-inputs">
               <input type="number" min="0" id="score1_${roundIndex}_${matchIndex}" placeholder="0">
               <span>-</span>
               <input type="number" min="0" id="score2_${roundIndex}_${matchIndex}" placeholder="0">
               <button onclick="submitResult(${roundIndex}, ${matchIndex})">Save</button>
-            </div>
+            </div>` : ''}
             ${renderMatchMetaBlock(`g_${currentGroup}_${roundIndex}_${matchIndex}`, result.match_time, result.location)}
           </div>
         `;
@@ -410,6 +425,7 @@ async function submitCricketResult(roundIndex, matchIndex) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
+        admin_token: adminToken,
         group_index: currentGroup,
         round_index: roundIndex,
         match_index: matchIndex,
@@ -449,6 +465,7 @@ async function submitResult(roundIndex, matchIndex) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
+        admin_token: adminToken,
         group_index: currentGroup,
         round_index: roundIndex,
         match_index: matchIndex,
@@ -702,6 +719,7 @@ async function submitNewRound() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
+        admin_token: adminToken,
         round_name: roundName,
         matchups: matchups
       })
@@ -718,7 +736,7 @@ async function submitNewRound() {
 async function deleteKnockoutRound(roundIndex) {
   showCustomConfirm("Remove this round? This cannot be undone.", async () => {
     try {
-      await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round/${roundIndex}`, {
+      await fetch(`${API_BASE}/tournament/${tournamentId}/knockout/round/${roundIndex}?admin_token=${encodeURIComponent(adminToken)}`, {
         method: "DELETE"
       });
       await refreshTournamentData();
@@ -770,7 +788,7 @@ function renderKnockout() {
       <div style="margin-bottom:20px;">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:2px;">
           <div style="font-weight:700; font-size:15px; color:#F1F1F6;">${escapeHtml(round.round_name)}</div>
-          <button onclick="deleteKnockoutRound(${roundIndex})" style="width:auto; padding:4px 10px; font-size:12px; background:#3A1620; color:#FF6B87;">Remove Round</button>
+          ${isEditMode ? `<button onclick="deleteKnockoutRound(${roundIndex})" style="width:auto; padding:4px 10px; font-size:12px; background:#3A1620; color:#FF6B87;">Remove Round</button>` : ''}
         </div>
         <div style="font-size:12px; color:#8888A0; margin-bottom:8px;">${playedInRound} of ${totalInRound} matches played</div>
     `;
@@ -816,6 +834,7 @@ function renderKnockout() {
         html += `
           <div class="match-row" style="flex-direction:column; align-items:stretch;">
             <span class="match-teams">${escapeHtml(match.team1)} vs ${escapeHtml(match.team2)}</span>
+            ${isEditMode ? `
             <div class="score-inputs" style="margin-top:6px;">
               ${scoreInputs}
             </div>
@@ -827,7 +846,7 @@ function renderKnockout() {
                 <option value="${escapeHtml(match.team2)}">${escapeHtml(match.team2)}</option>
               </select>
               <button onclick="submitKnockoutResult(${roundIndex}, ${matchIndex})">Save</button>
-            </div>
+            </div>` : '<span style="font-size:12px; color:#6A6A80; margin-top:6px;">Not played yet</span>'}
             ${renderMatchMetaBlock(`k_${roundIndex}_${matchIndex}`, match.match_time, match.location)}
           </div>
         `;
@@ -863,6 +882,7 @@ async function submitKnockoutResult(roundIndex, matchIndex) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         tournament_id: tournamentId,
+        admin_token: adminToken,
         round_index: roundIndex,
         match_index: matchIndex,
         winner: winner,

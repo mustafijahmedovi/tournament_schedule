@@ -37,6 +37,7 @@ def init_db():
             game_type TEXT NOT NULL DEFAULT 'football',
             knockout_json TEXT NOT NULL DEFAULT '[]',
             tournament_format TEXT NOT NULL DEFAULT 'league',
+            admin_token TEXT NOT NULL DEFAULT '',
             created_at TEXT NOT NULL
         )
     """)
@@ -61,6 +62,7 @@ class CreateTournamentInput(BaseModel):
 
 class MatchResultInput(BaseModel):
     tournament_id: str
+    admin_token: str
     group_index: int
     round_index: int
     match_index: int
@@ -72,12 +74,14 @@ class MatchResultInput(BaseModel):
 
 class AddKnockoutRoundInput(BaseModel):
     tournament_id: str
+    admin_token: str
     round_name: str
     matchups: List[List[str]]  # e.g. [["Team A", "Team B"], ["Team C", "Team D"]]
 
 
 class KnockoutResultInput(BaseModel):
     tournament_id: str
+    admin_token: str
     round_index: int
     match_index: int
     winner: str
@@ -89,6 +93,7 @@ class KnockoutResultInput(BaseModel):
 
 class MatchScheduleInput(BaseModel):
     tournament_id: str
+    admin_token: str
     group_index: int
     round_index: int
     match_index: int
@@ -98,6 +103,7 @@ class MatchScheduleInput(BaseModel):
 
 class KnockoutScheduleInput(BaseModel):
     tournament_id: str
+    admin_token: str
     round_index: int
     match_index: int
     match_time: Optional[str] = None
@@ -155,12 +161,13 @@ def create_tournament(input: CreateTournamentInput):
             results.append(group_results)
 
     tournament_id = str(uuid.uuid4())[:8]  # short shareable ID
+    admin_token = str(uuid.uuid4())  # long secret token, only given to the creator
     created_at = datetime.now().isoformat()
 
     conn = sqlite3.connect("tournaments.db")
     cursor = conn.cursor()
     cursor.execute(
-        "INSERT INTO tournaments (id, name, groups_json, schedule_json, results_json, points_win, points_draw, points_loss, game_type, knockout_json, tournament_format, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT INTO tournaments (id, name, groups_json, schedule_json, results_json, points_win, points_draw, points_loss, game_type, knockout_json, tournament_format, admin_token, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         (
             tournament_id,
             input.name,
@@ -173,13 +180,14 @@ def create_tournament(input: CreateTournamentInput):
             input.game_type,
             json.dumps([]),
             input.tournament_format,
+            admin_token,
             created_at
         )
     )
     conn.commit()
     conn.close()
 
-    return {"tournament_id": tournament_id, "message": "Tournament created!"}
+    return {"tournament_id": tournament_id, "admin_token": admin_token, "message": "Tournament created!"}
 
 
 @app.get("/tournament/{tournament_id}")
@@ -345,6 +353,10 @@ def add_knockout_round(tournament_id: str, input: AddKnockoutRoundInput):
         conn.close()
         raise HTTPException(status_code=404, detail="Tournament not found")
 
+    if input.admin_token != row["admin_token"]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Invalid or missing admin token — you don't have edit access to this tournament")
+
     if len(input.matchups) < 1:
         conn.close()
         raise HTTPException(status_code=400, detail="Need at least 1 matchup")
@@ -394,6 +406,10 @@ def submit_knockout_result(input: KnockoutResultInput):
         conn.close()
         raise HTTPException(status_code=404, detail="Tournament not found")
 
+    if input.admin_token != row["admin_token"]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Invalid or missing admin token — you don't have edit access to this tournament")
+
     knockout = json.loads(row["knockout_json"])
 
     try:
@@ -424,7 +440,7 @@ def submit_knockout_result(input: KnockoutResultInput):
 
 
 @app.delete("/tournament/{tournament_id}/knockout/round/{round_index}")
-def delete_knockout_round(tournament_id: str, round_index: int):
+def delete_knockout_round(tournament_id: str, round_index: int, admin_token: str):
     conn = sqlite3.connect("tournaments.db")
     conn.row_factory = sqlite3.Row
     cursor = conn.cursor()
@@ -434,6 +450,10 @@ def delete_knockout_round(tournament_id: str, round_index: int):
     if row is None:
         conn.close()
         raise HTTPException(status_code=404, detail="Tournament not found")
+
+    if admin_token != row["admin_token"]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Invalid or missing admin token — you don't have edit access to this tournament")
 
     knockout = json.loads(row["knockout_json"])
 
@@ -464,6 +484,10 @@ def set_match_schedule(input: MatchScheduleInput):
     if row is None:
         conn.close()
         raise HTTPException(status_code=404, detail="Tournament not found")
+
+    if input.admin_token != row["admin_token"]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Invalid or missing admin token — you don't have edit access to this tournament")
 
     results = json.loads(row["results_json"])
 
@@ -497,6 +521,10 @@ def set_knockout_schedule(input: KnockoutScheduleInput):
     if row is None:
         conn.close()
         raise HTTPException(status_code=404, detail="Tournament not found")
+
+    if input.admin_token != row["admin_token"]:
+        conn.close()
+        raise HTTPException(status_code=403, detail="Invalid or missing admin token — you don't have edit access to this tournament")
 
     knockout = json.loads(row["knockout_json"])
 
